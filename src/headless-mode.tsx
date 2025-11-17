@@ -1,5 +1,6 @@
 import { render } from "ink";
 import React from "react";
+import { encode } from "@toon-format/toon";
 import { createDatabaseConnection } from "./database/connection.js";
 import type { DatabaseConnection } from "./database/types.js";
 import { ActionType } from "./state/actions.js";
@@ -148,6 +149,9 @@ const HeadlessApp: React.FC<{ args: CliArgs }> = ({ args }) => {
 			} else if (result !== null) {
 				if (args.output === "json") {
 					console.log(JSON.stringify(result, null, 2));
+				} else if (args.output === "toon") {
+					// TOON format output for AI agents
+					console.log(encode(result));
 				} else {
 					// Simple table output for query results
 					if (result && result.rows) {

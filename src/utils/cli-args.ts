@@ -9,8 +9,8 @@ export interface CliArgs {
 	connect?: string;
 	/** SQL query to execute */
 	query?: string;
-	/** Output format (json, table) */
-	output?: "json" | "table";
+	/** Output format (json, table, toon) */
+	output?: "json" | "table" | "toon";
 	/** Run in headless mode (no TUI) */
 	headless?: boolean;
 	/** List saved connections */
@@ -65,7 +65,7 @@ export const parseCliArgs = (): CliArgs => {
 			dbType: values["db-type"] as string,
 			connect: values.connect as string,
 			query: values.query as string,
-			output: (values.output as "json" | "table") || "table",
+			output: (values.output as "json" | "table" | "toon") || "table",
 			headless: values.headless as boolean,
 			listConnections: values["list-connections"] as boolean,
 			help: values.help as boolean,
@@ -111,7 +111,7 @@ USAGE:
 
 QUERY OPTIONS:
   --query, -q <sql>            SQL query to execute
-  --output <format>            Output format: json, table (default: table)
+   --output <format>            Output format: json, table, toon (default: table)
 
 OTHER:
   --help, -h                   Show this help message
@@ -130,8 +130,11 @@ EXAMPLES:
   # API mode for programmatic control
   seerdb --api
 
-  # Headless mode with JSON output
-  seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users" --output json
+   # Headless mode with JSON output
+   seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users" --output json
+
+   # Headless mode with TOON output (optimized for AI agents)
+   seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
 `);
 };
 
