@@ -146,6 +146,7 @@ seerdb --headless --list-connections --output toon
 ### Automatic Protection
 - **Query Limits**: Warns about queries without LIMIT clauses
 - **Dangerous Operations**: Detects DROP, DELETE, TRUNCATE, UPDATE without WHERE
+- **🛡️ User Confirmation Required**: All dangerous operations must be explicitly confirmed by the user before execution to prevent accidental data loss
 - **Large Result Warnings**: Alerts when queries return >1000 rows
 - **Safe Methods**: `getUsersSample()` and `getTableData()` have automatic limits
 
@@ -438,6 +439,23 @@ const users = await agent.query("SELECT * FROM users WHERE role = ? AND active =
 // For intentional large queries
 const allUsers = await agent.query("SELECT id, name FROM users ORDER BY name", {
   skipLimitWarning: true
+});
+
+// For intentional dangerous operations (requires explicit confirmation)
+const result = await agent.query("UPDATE users SET active = false WHERE last_login < '2024-01-01'", [], {
+  skipDangerWarning: true
+});
+```
+
+### 6. User Confirmation for Dangerous Operations
+```typescript
+// This will prompt for user confirmation before execution:
+await agent.query("DELETE FROM old_logs WHERE created_at < '2023-01-01'");
+// User will see: "This operation will delete records. Are you sure? (y/N)"
+
+// For automation scripts, bypass confirmation:
+await agent.query("DELETE FROM temp_data WHERE expires_at < NOW()", [], {
+  skipDangerWarning: true  // Bypasses confirmation prompt
 });
 ```
 
