@@ -1,3 +1,6 @@
+import { readFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { parseArgs } from "util";
 
 export interface CliArgs {
@@ -102,7 +105,7 @@ USAGE:
   --db-type <type>             Database type: postgresql, mysql, sqlite
   --connect, -c <string>       Connection string or SQLite file path
   --connection-name <name>     Use a saved connection by name
-  --connection-id <id>         Use a saved connection by ID
+  --connection-id <id>         Use a saved connection by ID (recommended for automation)
   --host <host>                Database host
   --port <port>                Database port
   --database, -d <name>        Database name
@@ -117,6 +120,11 @@ OTHER:
   --help, -h                   Show this help message
   --agent-help                 Show AI agent instructions (if you're an agent READ THIS)
 
+DATABASE SUPPORT:
+  - PostgreSQL: Full support with connection pooling
+  - MySQL: Full support with connection pooling
+  - SQLite: Full support with Bun's native driver
+
 EXAMPLES:
   # Interactive mode (default)
   seerdb
@@ -130,94 +138,80 @@ EXAMPLES:
   # API mode for programmatic control
   seerdb --api
 
-   # Headless mode with JSON output
-   seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users" --output json
+  # Headless mode with JSON output
+  seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users" --output json
 
-   # Headless mode with TOON output (optimized for AI agents)
-   seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
+  # Headless mode with TOON output (optimized for AI agents - 30-60% fewer tokens)
+  seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
+
+  # List saved connections (shows ID, name, type, masked connection string)
+  seerdb --headless --list-connections --output toon
+
+  # Use saved connection by ID (most reliable for automation)
+  seerdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_name FROM information_schema.tables"
+
+  # Use saved connection by name
+  seerdb --headless --connection-name "My Database" --query "SELECT * FROM users LIMIT 10"
+
+SECURITY NOTES:
+  - Passwords are encrypted at rest and masked in output
+  - Use saved connections to avoid exposing credentials
+  - Connection IDs are unique and never change (perfect for automation)
+  - Never share database passwords or complete connection strings with passwords
+
+TOON FORMAT (AI Agent Optimized):
+  - 30-60% fewer tokens than JSON for uniform data arrays
+  - LLM-friendly with explicit array lengths [N] and field declarations {fields}
+  - Schema-aware with column metadata
+  - Compact tabular format for uniform object arrays
+
+  Example TOON output:
+  data[1]{id,name,role}:
+    1,Alice,admin
+
+For complete AI agent documentation, see AGENTS.md or run: seerdb --agent-help
 `);
 };
 
 export const showAgentHelp = () => {
-	console.log(`
+	try {
+		let agentsMdPath: string | null = null;
+
+		// Try multiple possible locations for AGENTS.md
+		const possiblePaths = [
+			// When running from project root
+			join(process.cwd(), "AGENTS.md"),
+			// When running from dist/
+			join(process.cwd(), "..", "AGENTS.md"),
+			// When running as installed binary (try common locations)
+			"/usr/local/share/seerdb/AGENTS.md",
+			"/opt/seerdb/AGENTS.md",
+		];
+
+		for (const path of possiblePaths) {
+			try {
+				readFileSync(path, "utf-8");
+				agentsMdPath = path;
+				break;
+			} catch {
+				// Continue to next path
+			}
+		}
+
+		if (!agentsMdPath) {
+			throw new Error("AGENTS.md not found in any expected location");
+		}
+
+		const content = readFileSync(agentsMdPath, "utf-8");
+		console.log(content);
+	} catch (error) {
+		console.error("Error reading AGENTS.md:", error);
+		console.log(`
 # SeerDB AI Agent Documentation
 
-Complete documentation for AI agents is available in AGENTS.md in the repository root.
+Unable to load AGENTS.md file. Please check that it exists in the project root.
 
-## Quick Start
-
-### Programmatic Interface
-\`\`\`typescript
-import { createAgent } from "seerdb/agent-api";
-
-const agent = createAgent();
-await agent.connect({
-  type: "postgresql",
-  host: "localhost",
-  database: "mydb",
-  user: "myuser",
-  password: "mypassword"
-});
-
-const result = await agent.query("SELECT * FROM users LIMIT 10");
-console.log(\`Found \${result.rowCount} users\`);
-await agent.disconnect();
-\`\`\`
-
-### API Mode (Interactive JSON)
-\`\`\`bash
-seerdb --api
-\`\`\`
-Send JSON commands via stdin:
-\`\`\`json
-{"type": "connect", "payload": {"type": "postgresql", "host": "localhost", "database": "mydb", "user": "myuser", "password": "mypassword"}}
-{"type": "query", "payload": {"sql": "SELECT * FROM users LIMIT 5"}}
-{"type": "exit"}
-\`\`\`
-
-### Headless Mode (One-off Operations)
-\`\`\`bash
-seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output json
-\`\`\`
-
-## Key Safety Features
-- **Query Limits**: Warns about queries without LIMIT clauses
-- **Dangerous Operations**: Detects DROP, DELETE, TRUNCATE, UPDATE without WHERE
-- **Large Result Warnings**: Alerts when queries return >1000 rows
-- **Credential Security**: Passwords encrypted at rest, masked in output
-
-## 🚨 IMPORTANT: Connection Security for AI Agents
-
-**To protect sensitive credentials, never share database passwords or connection strings in conversations with AI agents.**
-
-### Safe Connection Setup
-\`\`\`bash
-# Use interactive mode to add connections safely
-seerdb
-
-# Use saved connections by name (credentials are masked)
-seerdb --headless --list-connections --output json
-
-# Use saved connections by ID (most reliable)
-seerdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT * FROM users LIMIT 10"
-
-# Use command line without exposing passwords
-seerdb --headless --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT 1"
-\`\`\`
-
-### What to Do When Asked to Connect
-❌ **Don't**: Share passwords or complete connection strings with passwords
-✅ **Do**: Use interactive SeerDB UI to save connections first, then use saved connections by ID or name
-
-## List Saved Connections
-\`\`\`bash
-# List all connections with their IDs
-seerdb --headless --list-connections --output json
-
-# List connections in table format (shows ID, name, type)
-seerdb --headless --list-connections --output table
-\`\`\`
-
-See AGENTS.md for complete API reference, examples, and best practices.
+For more information about SeerDB agent capabilities, see the AGENTS.md file in the repository root.
 `);
+	}
 };
