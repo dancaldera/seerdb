@@ -32,12 +32,12 @@ const main = async () => {
 			if (process.platform === "darwin") {
 				// macOS
 				execSync("pbcopy", { input: fullContent });
-				console.log("SeerDB agent docs copied to clipboard");
+				console.log("✅ SeerDB agent documentation copied to clipboard!");
 			} else if (process.platform === "linux") {
 				// Linux
 				try {
 					execSync("xclip -selection clipboard", { input: fullContent });
-					console.log("SeerDB agent docs copied to clipboard");
+					console.log("✅ SeerDB agent documentation copied to clipboard!");
 				} catch {
 					console.log("No clipboard tool found. Output:");
 					console.log();
@@ -47,7 +47,7 @@ const main = async () => {
 				// Windows
 				try {
 					execSync("clip", { input: fullContent });
-					console.log("SeerDB agent docs copied to clipboard");
+					console.log("✅ SeerDB agent documentation copied to clipboard!");
 				} catch {
 					console.log("No clipboard tool found. Output:");
 					console.log();
