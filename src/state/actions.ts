@@ -34,6 +34,8 @@ export enum ActionType {
 	SetColumns = "SET_COLUMNS",
 	SetSelectedTable = "SET_SELECTED_TABLE",
 	ClearSelectedTable = "CLEAR_SELECTED_TABLE",
+	SetRefreshingTable = "SET_REFRESHING_TABLE",
+	SetRefreshTimestamp = "SET_REFRESH_TIMESTAMP",
 	UpdateDataRowValue = "UPDATE_DATA_ROW_VALUE",
 	SetDataRows = "SET_DATA_ROWS",
 	SetHasMoreRows = "SET_HAS_MORE_ROWS",
@@ -82,6 +84,8 @@ export type AppAction =
 	| { type: ActionType.SetColumns; columns: ColumnInfo[] }
 	| { type: ActionType.SetSelectedTable; table: TableInfo }
 	| { type: ActionType.ClearSelectedTable }
+	| { type: ActionType.SetRefreshingTable; key: string }
+	| { type: ActionType.SetRefreshTimestamp; key: string; timestamp: number }
 	| {
 			type: ActionType.UpdateDataRowValue;
 			columnName: string;

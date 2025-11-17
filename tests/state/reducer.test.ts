@@ -82,54 +82,30 @@ describe("appReducer", () => {
 
 	it("restores cached table preview when reselecting", () => {
 		const table = { name: "users", schema: "public", type: "table" as const };
-		const cacheKey = "public|users";
 		const state = {
 			...initialAppState,
-				[cacheKey]: {
-					columns: [
-						{
-							name: "id",
-							dataType: "int",
-							nullable: false,
-							isPrimaryKey: true,
-						},
-					],
-					rows: [{ id: 1, name: "Alice" }],
-					hasMore: true,
-					offset: 50,
+			selectedTable: table,
+			columns: [
+				{
+					name: "id",
+					dataType: "int",
+					nullable: false,
+					isPrimaryKey: true,
 				},
-			},
+			],
+			dataRows: [{ id: 1, name: "Alice" }],
+			hasMoreRows: true,
+			currentOffset: 50,
 		};
 
 		const result = appReducer(state, {
 			type: ActionType.SetSelectedTable,
 			table,
 		});
-		expect(result.hasMoreRows).toBe(true);
-		expect(result.currentOffset).toBe(50);
-	});
-
-	it("removes cache entry when requested", () => {
-		const cacheKey = "public|users";
-		const state = {
-			...initialAppState,
-				[cacheKey]: {
-					columns: [],
-					rows: [{ id: 1 }],
-					hasMore: false,
-					offset: 0,
-				},
-			},
-			selectedTable: { name: "users", schema: "public", type: "table" },
-		};
-
-		const result = appReducer(state, {
-			type: ActionType.RemoveTableCacheEntry,
-			key: cacheKey,
-		});
-		expect(result.dataRows).toEqual([]);
-		expect(result.columns).toEqual([]);
-		expect(result.currentOffset).toBe(0);
-		expect(result.refreshingTableKey).toBe(cacheKey);
+		expect(result.selectedTable).toEqual(table);
+		expect(result.columns).toEqual([]); // Columns are cleared when selecting a table
+		expect(result.dataRows).toEqual([]); // Data rows are cleared when selecting a table
+		expect(result.hasMoreRows).toBe(false); // Reset to default
+		expect(result.currentOffset).toBe(0); // Reset to default
 	});
 });

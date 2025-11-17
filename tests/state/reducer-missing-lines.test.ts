@@ -172,19 +172,11 @@ describe("appReducer - Missing line coverage", () => {
 		expect(result.breadcrumbs[1]).toEqual(newBreadcrumb);
 	});
 
-	it("clears refreshingTableKey after cache update", () => {
+	it("updates hasMoreRows flag", () => {
 		const state = {
 			...initialAppState,
 			loading: false,
-			refreshingTableKey: "public|users",
 			selectedTable: { name: "users", schema: "public", type: "table" },
-				"public|users": {
-					columns: [],
-					rows: [],
-					hasMore: false,
-					offset: 0,
-				},
-			},
 		};
 
 		const result = appReducer(state, {
@@ -192,6 +184,6 @@ describe("appReducer - Missing line coverage", () => {
 			hasMore: true,
 		});
 
-		expect(result.refreshingTableKey).toBeNull();
+		expect(result.hasMoreRows).toBe(true);
 	});
 });

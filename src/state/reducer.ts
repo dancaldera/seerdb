@@ -151,11 +151,20 @@ export function appReducer(
 
 			case ActionType.ClearSelectedTable:
 				draft.selectedTable = null;
+				draft.columns = [];
 				draft.dataRows = [];
 				draft.hasMoreRows = false;
 				draft.currentOffset = 0;
 				draft.refreshingTableKey = null;
 				resetSearchState(draft);
+				break;
+
+			case ActionType.SetRefreshingTable:
+				draft.refreshingTableKey = action.key;
+				break;
+
+			case ActionType.SetRefreshTimestamp:
+				draft.refreshTimestamps[action.key] = action.timestamp;
 				break;
 
 			case ActionType.SetDataRows:

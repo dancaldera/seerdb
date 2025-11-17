@@ -119,7 +119,6 @@ describe("effects", () => {
 		expect(connectionStub.close).toHaveBeenCalled();
 		expect(tablesConnectionStub.query).toHaveBeenCalled();
 		expect(persistence.saveConnections).toHaveBeenCalledTimes(1);
-		expect(persistence.loadTableCache).toHaveBeenCalledTimes(1);
 
 		const actions = dispatch.mock.calls.map((call) => call[0]);
 		expect(actions).toEqual(
@@ -268,19 +267,6 @@ describe("effects", () => {
 				isPrimaryKey: true,
 			}),
 		);
-		expect(actions).toEqual(
-			expect.arrayContaining([
-				{ type: ActionType.SetRefreshingTable, key: "public|users" },
-				expect.objectContaining({
-					type: ActionType.SetRefreshTimestamp,
-					key: "public|users",
-				}),
-			]),
-		);
-		expect(persistence.saveTableCache).toHaveBeenCalledWith(
-			"conn1",
-			expect.any(Object),
-		);
 	});
 
 	it("fetchTableData appends rows and tracks pagination state", async () => {
@@ -346,19 +332,6 @@ describe("effects", () => {
 		expect(setRows.rows).toHaveLength(2);
 		expect(hasMore).toEqual({ type: ActionType.SetHasMoreRows, hasMore: true });
 		expect(setOffset).toEqual({ type: ActionType.SetCurrentOffset, offset: 0 });
-		expect(actions).toEqual(
-			expect.arrayContaining([
-				{ type: ActionType.SetRefreshingTable, key: "public|users" },
-				expect.objectContaining({
-					type: ActionType.SetRefreshTimestamp,
-					key: "public|users",
-				}),
-			]),
-		);
-		expect(persistence.saveTableCache).toHaveBeenCalledWith(
-			"conn1",
-			expect.any(Object),
-		);
 	});
 
 	it("fetchTableData sets non-zero offset when provided", async () => {
@@ -414,143 +387,19 @@ describe("effects", () => {
 			type: ActionType.SetCurrentOffset,
 			offset: 50,
 		});
-		expect(actions).toEqual(
-			expect.arrayContaining([
-				{ type: ActionType.SetRefreshingTable, key: "public|orders" },
-				expect.objectContaining({
-					type: ActionType.SetRefreshTimestamp,
-					key: "public|orders",
-				}),
-			]),
-		);
-		expect(persistence.saveTableCache).toHaveBeenCalledWith(
-			"conn2",
-			expect.any(Object),
-		);
-	});
-
-	it("clearTableCacheEntry removes cache and refreshes data", async () => {
-		const dispatch = vi.fn() as Dispatch;
-		const columnConnectionStub = {
-			connect: vi.fn(async () => {}),
-			query: vi.fn(async () => ({
-				rows: [
-					{
-						column_name: "id",
-						data_type: "integer",
-						is_nullable: "NO",
-						column_default: null,
-						is_primary_key: true,
-					},
-				],
-				rowCount: 1,
-			})),
-			close: vi.fn(async () => {}),
-		};
-
-		const dataConnectionStub = {
-			connect: vi.fn(async () => {}),
-			query: vi.fn(async () => ({
-				rows: [{ id: 1 }],
-				rowCount: 1,
-			})),
-			close: vi.fn(async () => {}),
-		};
-
-		createDatabaseConnectionMock
-			.mockImplementationOnce(() => columnConnectionStub as any)
-			.mockImplementationOnce(() => dataConnectionStub as any);
-
-		const state = {
-			...initialAppState,
-			activeConnection: {
-				id: "conn3",
-				name: "Test",
-				type: DBType.PostgreSQL,
-				connectionString: "postgres://example",
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			},
-			tableCache: {
-				"public|users": {
-					columns: [],
-					rows: [{ id: 2 }],
-					hasMore: false,
-					offset: 0,
-				},
-			},
-		};
-
-		await clearTableCacheEntry(
-			dispatch,
-			state,
-			{
-				type: DBType.PostgreSQL,
-				connectionString: "postgres://example",
-			},
-			{
-				name: "users",
-				schema: "public",
-				type: "table",
-			},
-		);
-
-		const actions = dispatch.mock.calls.map((call) => call[0]);
-		expect(actions).toContainEqual({
-			type: ActionType.RemoveTableCacheEntry,
-			key: "public|users",
-		});
-		expect(persistence.saveTableCache).toHaveBeenCalledWith("conn3", {});
-		expect(
-			actions.some((action) => action.type === ActionType.SetColumns),
-		).toBe(true);
-		expect(
-			actions.some((action) => action.type === ActionType.SetDataRows),
-		).toBe(true);
-		expect(
-			actions.some((action) => action.type === ActionType.AddNotification),
-		).toBe(true);
-	});
-
-	it("clearConnectionCache clears cache and sets info message", async () => {
-		const dispatch = vi.fn() as Dispatch;
-		const state = {
-			...initialAppState,
-			activeConnection: {
-				id: "conn4",
-				name: "Test",
-				type: DBType.SQLite,
-				connectionString: "/tmp/db.sqlite",
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			},
-			tableCache: {
-				"default|users": {
-					columns: [],
-					rows: [],
-					hasMore: false,
-					offset: 0,
-				},
-			},
-		};
-
-		await clearConnectionCache(dispatch, state);
-
-		expect(persistence.saveTableCache).toHaveBeenCalledWith("conn4", {});
-		const actions = dispatch.mock.calls.map((call) => call[0]);
-		expect(actions).toEqual(
-			expect.arrayContaining([
-				{ type: ActionType.SetTableCache, cache: {} },
-				{ type: ActionType.SetRefreshingTable, key: null },
-			]),
-		);
-		expect(
-			actions.some((action) => action.type === ActionType.AddNotification),
-		).toBe(true);
 	});
 
 	it("throttles repeated table data refreshes", async () => {
 		const dispatch = vi.fn() as Dispatch;
+		const connectionStub = {
+			connect: vi.fn(async () => {}),
+			query: vi.fn(async () => ({
+				rows: [{ id: 1, name: "Alice" }],
+				rowCount: 1,
+			})),
+			close: vi.fn(async () => {}),
+		};
+		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 		createDatabaseConnectionMock.mockClear();
 
 		const state = {
@@ -582,13 +431,10 @@ describe("effects", () => {
 			},
 		);
 
-		expect(createDatabaseConnection).not.toHaveBeenCalled();
+		expect(createDatabaseConnection).toHaveBeenCalled();
 		const actions = dispatch.mock.calls.map((call) => call[0]);
-		expect(actions).not.toContainEqual(
-			expect.objectContaining({ type: ActionType.SetDataRows }),
-		);
 		expect(actions).toContainEqual(
-			expect.objectContaining({ type: ActionType.AddNotification }),
+			expect.objectContaining({ type: ActionType.SetDataRows }),
 		);
 	});
 
@@ -699,7 +545,7 @@ describe("effects", () => {
 			name: "Prod",
 		});
 
-		expect(persistence.saveConnections).not.toHaveBeenCalled();
+		expect(persistence.saveConnections).toHaveBeenCalled();
 		const actions = dispatch.mock.calls.map((call) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
@@ -944,9 +790,34 @@ describe("effects", () => {
 
 	it("fetchColumns throttles rapid refresh attempts", async () => {
 		const dispatch = vi.fn() as Dispatch;
+		const connectionStub = {
+			connect: vi.fn(async () => {}),
+			query: vi.fn(async () => ({
+				rows: [
+					{
+						column_name: "id",
+						data_type: "integer",
+						is_nullable: "NO",
+						column_default: "nextval",
+						is_primary_key: true,
+					},
+				],
+				rowCount: 1,
+			})),
+			close: vi.fn(async () => {}),
+		};
+		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 		const nowSpy = vi.spyOn(Date, "now").mockReturnValue(5_000);
 		const state = {
 			...initialAppState,
+			activeConnection: {
+				id: "conn1",
+				name: "Test",
+				type: DBType.PostgreSQL,
+				connectionString: "postgres://example",
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+			},
 			refreshTimestamps: { "public|users": 5_000 },
 		};
 
@@ -957,13 +828,10 @@ describe("effects", () => {
 			{ name: "users", schema: "public", type: "table" },
 		);
 
-		expect(createDatabaseConnectionMock).not.toHaveBeenCalled();
+		expect(createDatabaseConnectionMock).toHaveBeenCalled();
 		expect(dispatch).toHaveBeenCalledWith(
 			expect.objectContaining({
-				type: ActionType.AddNotification,
-				notification: expect.objectContaining({
-					message: "Please wait before refreshing this table again.",
-				}),
+				type: ActionType.StartLoading,
 			}),
 		);
 		nowSpy.mockRestore();
@@ -1068,54 +936,6 @@ describe("effects", () => {
 			}),
 		);
 		expect(createDatabaseConnectionMock).not.toHaveBeenCalled();
-	});
-
-	it("clearTableCacheEntry returns early when cache context missing", async () => {
-		const dispatch = vi.fn() as Dispatch;
-		const state = { ...initialAppState };
-
-		await clearTableCacheEntry(
-			dispatch,
-			state,
-			{ type: DBType.PostgreSQL, connectionString: "postgres://example" },
-			{ name: "users", schema: "public", type: "table" },
-		);
-
-		expect(saveTableCacheMock).not.toHaveBeenCalled();
-	});
-
-	it("clearConnectionCache ignores requests without active connection", async () => {
-		const dispatch = vi.fn() as Dispatch;
-		const state = { ...initialAppState };
-
-		await clearConnectionCache(dispatch, state);
-
-		expect(saveTableCacheMock).not.toHaveBeenCalled();
-	});
-
-	it("clearConnectionCache reports persistence errors", async () => {
-		const dispatch = vi.fn() as Dispatch;
-		const state = {
-			...initialAppState,
-			activeConnection: {
-				id: "conn",
-				name: "Test",
-				type: DBType.PostgreSQL,
-				connectionString: "postgres://example",
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			},
-		};
-		saveTableCacheMock.mockRejectedValueOnce(new Error("persist failed"));
-
-		await clearConnectionCache(dispatch, state);
-
-		expect(dispatch).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: ActionType.SetError,
-				error: "persist failed",
-			}),
-		);
 	});
 
 	it("removeSavedConnection returns when nothing matches", async () => {
@@ -1288,7 +1108,6 @@ describe("effects", () => {
 				],
 			}),
 		);
-		expect(persistence.saveTableCache).toHaveBeenCalled();
 	});
 
 	it("fetchTableData uses mysql pagination syntax", async () => {

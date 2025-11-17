@@ -272,11 +272,6 @@ describe("appReducer - Expanded Coverage", () => {
 			});
 
 			expect(result.columns).toEqual(columns);
-				columns,
-				rows: [{ id: 1, name: "Alice" }],
-				hasMore: true,
-				offset: 10,
-			});
 		});
 
 		it("clears selected table and resets state", () => {
@@ -323,12 +318,6 @@ describe("appReducer - Expanded Coverage", () => {
 			});
 
 			expect(result.dataRows).toEqual(rows);
-				columns: [{ name: "id", dataType: "integer", nullable: false }],
-				rows,
-				hasMore: false,
-				offset: 0,
-			});
-			expect(result.refreshingTableKey).toBeNull();
 		});
 
 		it("sets has more rows and updates cache", () => {
@@ -345,11 +334,6 @@ describe("appReducer - Expanded Coverage", () => {
 			});
 
 			expect(result.hasMoreRows).toBe(true);
-				columns: [{ name: "id", dataType: "integer", nullable: false }],
-				rows: [{ id: 1 }],
-				hasMore: true,
-				offset: 0,
-			});
 		});
 
 		it("sets current offset and clears selection", () => {
@@ -368,11 +352,6 @@ describe("appReducer - Expanded Coverage", () => {
 			expect(result.currentOffset).toBe(50);
 			expect(result.selectedRowIndex).toBeNull();
 			expect(result.expandedRow).toBeNull();
-				columns: [],
-				rows: [],
-				hasMore: false,
-				offset: 50,
-			});
 		});
 
 		it("sets selected row index and clears expanded row", () => {
@@ -426,17 +405,9 @@ describe("appReducer - Expanded Coverage", () => {
 			expect(result.refreshingTableKey).toBeNull();
 		});
 
-		it("removes table cache entry", () => {
-			const cacheKey = "public|users";
+		it("removes table data on selection", () => {
 			const state = {
 				...initialAppState,
-					[cacheKey]: {
-						columns: [{ name: "id", dataType: "integer", nullable: false }],
-						rows: [{ id: 1 }],
-						hasMore: false,
-						offset: 0,
-					},
-				},
 				selectedTable: { name: "users", schema: "public", type: "table" },
 				columns: [{ name: "id", dataType: "integer", nullable: false }],
 				dataRows: [{ id: 1 }],
@@ -445,15 +416,14 @@ describe("appReducer - Expanded Coverage", () => {
 			};
 
 			const result = appReducer(state, {
-				type: ActionType.RemoveTableCacheEntry,
-				key: cacheKey,
+				type: ActionType.ClearSelectedTable,
 			});
 
+			expect(result.selectedTable).toBeNull();
 			expect(result.columns).toEqual([]);
 			expect(result.dataRows).toEqual([]);
 			expect(result.hasMoreRows).toBe(false);
 			expect(result.currentOffset).toBe(0);
-			expect(result.refreshingTableKey).toBe(cacheKey);
 		});
 
 		it("sets refreshing table key", () => {
@@ -827,11 +797,6 @@ describe("appReducer - Expanded Coverage", () => {
 			expect(state.selectedTable).toEqual(tables[0]);
 			expect(state.columns).toEqual(columns);
 			expect(state.dataRows).toEqual(rows);
-				columns,
-				rows,
-				hasMore: false,
-				offset: 0,
-			});
 		});
 	});
 });
