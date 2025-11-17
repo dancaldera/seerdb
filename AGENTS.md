@@ -101,7 +101,7 @@ await agent.connect({
 const result = await agent.query("SELECT * FROM users LIMIT 10");
 console.log(`Found ${result.rowCount} users`);
 
-// Safe user sampling (max 50 users)
+// Safe user sampling (max 10 users)
 const users = await agent.getUsersSample(10);
 
 // Safe table browsing (max 1000 rows)
@@ -298,7 +298,7 @@ const schema = await agent.getSchema();
 ### Safe Data Access
 
 ```typescript
-// Safe user sampling (max 50)
+// Safe user sampling (max 10)
 const users = await agent.getUsersSample(10);
 
 // Safe table browsing (max 1000 rows)
@@ -407,7 +407,7 @@ await agent.query("SELECT * FROM users WHERE last_login > '2024-01-01'");
 // ✅ Use safe methods
 const recentUsers = await agent.getTableData("users", {
   where: "last_login > '2024-01-01'",
-  limit: 50
+  limit: 10
 });
 ```
 
