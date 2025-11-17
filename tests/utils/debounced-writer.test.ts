@@ -31,6 +31,19 @@ describe("DebouncedWriter", () => {
 			expect((writer as any).pendingData).toBe("test data");
 			expect((writer as any).isDirty).toBe(true);
 		});
+
+		it("should schedule flush after delay", async () => {
+			const fastWriter = new DebouncedWriter(writeFn, 0);
+
+			fastWriter.write("test data");
+
+			expect(writeFn).not.toHaveBeenCalled();
+
+			// Wait for next tick
+			await new Promise((resolve) => setTimeout(resolve, 0));
+
+			expect(writeFn).toHaveBeenCalledWith("test data");
+		});
 	});
 
 	describe("flush", () => {

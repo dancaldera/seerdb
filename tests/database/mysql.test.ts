@@ -127,30 +127,83 @@ describe("MySQLConnection", () => {
 	});
 
 	it("handles close timeout gracefully", async () => {
-		const originalSetTimeout = global.setTimeout;
-		const originalClearTimeout = global.clearTimeout;
-		(globalThis as any).setTimeout = (fn: () => void) => {
-			fn();
-			return 0;
-		};
-		(globalThis as any).clearTimeout = () => {};
 		const slowConnection = new MySQLConnection({
 			type: "MySQL" as any,
 			connectionString: "mysql://test",
 			pool: {
-				closeTimeoutMillis: 5,
+				closeTimeoutMillis: 1, // Very short timeout
 			},
 		});
-		mockMysqlEnd.mockReturnValueOnce(new Promise(() => {}));
+
+		// Mock pool.end to never resolve (simulating hanging close)
+		let endResolve: (() => void) | undefined;
+		let endReject: ((error: Error) => void) | undefined;
+		const endPromise = new Promise<void>((resolve, reject) => {
+			endResolve = resolve;
+			endReject = reject;
+		});
+		mockMysqlEnd.mockReturnValueOnce(endPromise);
+
 		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-		await slowConnection.close();
+		// Start close - this should timeout
+		const closePromise = slowConnection.close();
 
-		expect(warnSpy).toHaveBeenCalled();
+		// Wait a bit for timeout to trigger
+		await new Promise((resolve) => setTimeout(resolve, 10));
+
+		// Now resolve the end promise (simulating eventual close)
+		if (endResolve) endResolve();
+
+		// Wait for close to complete
+		await closePromise;
+
+		expect(warnSpy).toHaveBeenCalledWith(
+			"MySQL pool close timed out; continuing shutdown asynchronously.",
+		);
 		expect((slowConnection as any).connected).toBe(false);
 		warnSpy.mockRestore();
-		(globalThis as any).setTimeout = originalSetTimeout;
-		(globalThis as any).clearTimeout = originalClearTimeout;
+	});
+
+	it("handles close timeout with eventual failure", async () => {
+		const slowConnection = new MySQLConnection({
+			type: "MySQL" as any,
+			connectionString: "mysql://test",
+			pool: {
+				closeTimeoutMillis: 1, // Very short timeout
+			},
+		});
+
+		// Mock pool.end to eventually reject
+		let endReject: ((error: Error) => void) | undefined;
+		const endPromise = new Promise<void>((resolve, reject) => {
+			endReject = reject;
+		});
+		mockMysqlEnd.mockReturnValueOnce(endPromise);
+
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+		// Start close - this should timeout
+		const closePromise = slowConnection.close();
+
+		// Wait a bit for timeout to trigger
+		await new Promise((resolve) => setTimeout(resolve, 10));
+
+		// Now reject the end promise (simulating eventual failure)
+		if (endReject) endReject(new Error("Close failed"));
+
+		// Wait for close to complete
+		await closePromise;
+
+		expect(warnSpy).toHaveBeenCalledWith(
+			"MySQL pool close timed out; continuing shutdown asynchronously.",
+		);
+		expect(warnSpy).toHaveBeenCalledWith(
+			"MySQL pool close eventually failed:",
+			expect.any(Error),
+		);
+		expect((slowConnection as any).connected).toBe(false);
+		warnSpy.mockRestore();
 	});
 
 	it("warns when close rejects immediately", async () => {

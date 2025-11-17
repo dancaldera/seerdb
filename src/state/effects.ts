@@ -27,7 +27,6 @@ import {
 	validateConnectionNameComplete,
 } from "../utils/id-generator.js";
 
-
 import {
 	loadConnections,
 	loadQueryHistory,
@@ -421,14 +420,6 @@ export async function updateTableFieldValue(
 		return false;
 	}
 
-	if (!state.dbType) {
-		dispatch({
-			type: ActionType.SetError,
-			error: "Database type not set.",
-		});
-		return false;
-	}
-
 	const config: DatabaseConfig = {
 		type: state.dbType,
 		connectionString: state.activeConnection.connectionString,
@@ -599,7 +590,6 @@ export async function searchTableRows(
 	}
 }
 
-
 export async function removeSavedConnection(
 	dispatch: AppDispatch,
 	state: AppState,
@@ -754,7 +744,6 @@ export async function updateSavedConnection(
 		);
 	}
 }
-
 
 function enqueueNotification(
 	dispatch: AppDispatch,

@@ -16,9 +16,20 @@ vi.mock("../../src/utils/persistence.js", () => ({
 	saveQueryHistory: vi.fn(async () => {}),
 }));
 
+vi.mock("../../src/utils/export.js", () => ({
+	exportData: vi.fn(),
+	formatExportSummary: vi.fn(),
+}));
+
+vi.mock("../../src/utils/data-processing.js", () => ({
+	processRows: vi.fn(),
+}));
+
 import { beforeEach, describe, expect, it } from "bun:test";
 import { ConnectionError } from "../../src/database/errors.js";
 import * as effects from "../../src/state/effects.js";
+import { exportData, formatExportSummary } from "../../src/utils/export.js";
+import { processRows } from "../../src/utils/data-processing.js";
 
 const {
 	connectToDatabase,
@@ -541,11 +552,17 @@ describe("effects", () => {
 			],
 		};
 
+		// Mock persistence to return existing connections for validation
+		(persistence.loadConnections as any).mockResolvedValueOnce({
+			connections: state.savedConnections,
+			version: "1.0",
+		});
+
 		await effects.updateSavedConnection(dispatch, state, "def", {
 			name: "Prod",
 		});
 
-		expect(persistence.saveConnections).toHaveBeenCalled();
+		expect(persistence.saveConnections).not.toHaveBeenCalled();
 		const actions = dispatch.mock.calls.map((call) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
@@ -1215,12 +1232,132 @@ describe("effects", () => {
 		);
 	});
 
+	it("searchTableRows uses mysql search syntax", async () => {
+		const dispatch = vi.fn() as Dispatch;
+		let capturedCountSql = "";
+		let capturedDataSql = "";
+		const queryMock = vi.fn().mockImplementation(async (sql: string) => {
+			if (sql.includes("COUNT")) {
+				capturedCountSql = sql;
+				return { rows: [{ total_count: 1 }], rowCount: 1 };
+			} else {
+				capturedDataSql = sql;
+				return { rows: [{ id: 1 }], rowCount: 1 };
+			}
+		});
+		const connection = {
+			connect: vi.fn(async () => {}),
+			query: queryMock,
+			close: vi.fn(async () => {}),
+		};
+		createDatabaseConnectionMock.mockReturnValueOnce(connection as any);
+
+		const state = { ...initialAppState };
+		await effects.searchTableRows(
+			dispatch,
+			state,
+			{ type: DBType.MySQL, connectionString: "mysql://example" },
+			{ name: "users", schema: "public", type: "table" },
+			[
+				{
+					name: "name",
+					dataType: "text",
+					nullable: true,
+				},
+			],
+			{ term: "test" },
+		);
+
+		expect(capturedCountSql).toContain(
+			"SELECT COUNT(*) AS total_count FROM `public`.`users` WHERE LOWER(CAST(`name` AS CHAR)) LIKE LOWER(?)",
+		);
+		expect(capturedDataSql).toContain(
+			"SELECT * FROM `public`.`users` WHERE LOWER(CAST(`name` AS CHAR)) LIKE LOWER(?) ORDER BY `name` LIMIT 0, 25",
+		);
+	});
+
+	it("exportTableData exports data successfully", async () => {
+		const dispatch = vi.fn() as Dispatch;
+		const state = {
+			...initialAppState,
+			dataRows: [{ id: 1, name: "Test" }],
+			columns: [
+				{ name: "id", dataType: "integer", nullable: false },
+				{ name: "name", dataType: "text", nullable: true },
+			],
+		};
+
+		// Mock the export functions
+		(exportData as any).mockResolvedValue("/path/to/export.csv");
+		(formatExportSummary as any).mockReturnValue("Exported 1 rows to CSV");
+		(processRows as any).mockReturnValue(state.dataRows);
+
+		await effects.exportTableData(dispatch, state, "csv", true);
+
+		expect(processRows).toHaveBeenCalledWith(
+			state.dataRows,
+			state.sortConfig,
+			state.filterValue,
+			state.columns,
+		);
+		expect(exportData).toHaveBeenCalledWith(state.dataRows, state.columns, {
+			format: "csv",
+			includeHeaders: true,
+			filename: undefined,
+			outputDir: undefined,
+		});
+		expect(formatExportSummary).toHaveBeenCalledWith(
+			"/path/to/export.csv",
+			1,
+			"csv",
+			2,
+		);
+		expect(dispatch).toHaveBeenCalledWith({
+			type: ActionType.SetInfo,
+			message: "Exported 1 rows to CSV",
+		});
+	});
+
+	it("exportTableData handles export errors", async () => {
+		const dispatch = vi.fn() as Dispatch;
+		const state = {
+			...initialAppState,
+			dataRows: [{ id: 1, name: "Test" }],
+			columns: [{ name: "id", dataType: "integer", nullable: false }],
+		};
+
+		// Mock the export functions to throw an error
+		(exportData as any).mockRejectedValue(new Error("Export failed"));
+		(processRows as any).mockReturnValue(state.dataRows);
+
+		await effects.exportTableData(dispatch, state, "csv", true);
+
+		expect(dispatch).toHaveBeenCalledWith({
+			type: ActionType.SetError,
+			error: "Export failed",
+		});
+		expect(dispatch).toHaveBeenCalledWith({ type: ActionType.StopLoading });
+	});
+
 	it("extractCount handles bigint values", () => {
 		expect(extractCount({ total_count: BigInt(7) })).toBe(7);
 	});
 
 	it("buildSearchWhereClause falls back to tautology without columns", () => {
 		expect(buildSearchWhereClause(DBType.PostgreSQL, [])).toBe("1=1");
+	});
+
+	it("buildSearchWhereClause builds search expressions for columns", () => {
+		const columns: ColumnInfo[] = [
+			{ name: "name", dataType: "text", nullable: true },
+			{ name: "email", dataType: "text", nullable: true },
+		];
+		expect(buildSearchWhereClause(DBType.PostgreSQL, columns)).toBe(
+			'("name")::TEXT ILIKE $1 OR ("email")::TEXT ILIKE $1',
+		);
+		expect(buildSearchWhereClause(DBType.MySQL, columns)).toBe(
+			"LOWER(CAST(`name` AS CHAR)) LIKE LOWER($1) OR LOWER(CAST(`email` AS CHAR)) LIKE LOWER($1)",
+		);
 	});
 
 	it("buildColumnQuery generates sqlite pragma statement", () => {
@@ -1275,6 +1412,19 @@ describe("effects", () => {
 		expect(sql).toBe('SELECT * FROM "users" LIMIT 5 OFFSET 10');
 	});
 
+	it("buildTableDataQuery includes ORDER BY when sorting is active", () => {
+		const sql = buildTableDataQuery(
+			DBType.PostgreSQL,
+			{ name: "users", schema: "public", type: "table" },
+			5,
+			10,
+			{ column: "name", direction: "asc" },
+		);
+		expect(sql).toBe(
+			'SELECT * FROM "public"."users" ORDER BY "name" ASC LIMIT 5 OFFSET 10',
+		);
+	});
+
 	it("buildTableReference quotes schema-qualified tables", () => {
 		const ref = buildTableReference(DBType.PostgreSQL, {
 			name: "users",
@@ -1290,6 +1440,16 @@ describe("effects", () => {
 
 	it("extractCount returns zero for unsupported value types", () => {
 		expect(extractCount({ total_count: { unexpected: true } })).toBe(0);
+	});
+
+	it("extractCount returns zero for null or non-object input", () => {
+		expect(extractCount(null)).toBe(0);
+		expect(extractCount("string")).toBe(0);
+		expect(extractCount(42)).toBe(0);
+	});
+
+	it("extractCount handles NaN values", () => {
+		expect(extractCount({ total_count: NaN })).toBe(0);
 	});
 
 	it("selectSearchOrderColumn returns null when no columns provided", () => {
@@ -1570,6 +1730,31 @@ describe("effects", () => {
 				error: expect.stringContaining("Missing primary key value"),
 			});
 			expect(connectionStub.close).toHaveBeenCalledTimes(1);
+		});
+
+		it("returns false when dbType is not set", async () => {
+			const dispatch = vi.fn() as Dispatch;
+			const state = {
+				...buildState(),
+				dbType: null, // dbType not set
+			};
+			const row = state.dataRows[0];
+
+			const result = await updateTableFieldValue(
+				dispatch,
+				state,
+				table,
+				nameColumn,
+				0,
+				row,
+				"Bob",
+			);
+
+			expect(result).toBe(false);
+			expect(dispatch).toHaveBeenCalledWith({
+				type: ActionType.SetError,
+				error: "No active database connection.",
+			});
 		});
 	});
 

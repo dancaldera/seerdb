@@ -596,7 +596,6 @@ function restorePasswordToConnectionString(
 	return maskedConnectionString;
 }
 
-
 // Export utility functions for credential sanitization
 export { maskPassword };
 
@@ -604,4 +603,9 @@ export const __persistenceInternals = {
 	normalizeConnectionEntry,
 	connectionSchema,
 	maskPassword,
+	getEncryptionKey,
+	encryptPassword,
+	decryptPassword,
+	connectionsWriter,
+	queryHistoryWriter,
 } as const;

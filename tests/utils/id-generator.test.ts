@@ -201,6 +201,30 @@ describe("id-generator utilities", () => {
 			expect(result).toBe("existing-id-1_1");
 		});
 
+		it("should increment suffix until unique ID found", async () => {
+			// Add a connection that conflicts with the first suffix attempt
+			const conflictingConnections = [
+				...mockConnections,
+				{
+					id: "existing-id-1_1",
+					name: "Existing Connection 1 Suffix 1",
+					type: DBType.PostgreSQL,
+					connectionString: "postgresql://test",
+					createdAt: "2024-01-01T00:00:00Z",
+					updatedAt: "2024-01-01T00:00:00Z",
+				},
+			];
+
+			mockLoadConnections.mockResolvedValue({
+				connections: conflictingConnections,
+				version: "1.0",
+			});
+
+			const result = await ensureUniqueId("existing-id-1");
+
+			expect(result).toBe("existing-id-1_2");
+		});
+
 		it("should generate new ID after max suffix attempts", async () => {
 			// Mock many existing connections with numbered suffixes
 			const manyConnections = Array.from({ length: 100 }, (_, i) => ({

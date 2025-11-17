@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
 import { constants } from "fs";
 import path from "path";
+import { randomBytes, createCipheriv, createDecipheriv } from "crypto";
 import type {
 	ColumnInfo,
 	ConnectionInfo,
@@ -55,11 +56,24 @@ vi.mock("crypto", () => ({
 		update: vi.fn().mockReturnThis(),
 		digest: vi.fn().mockReturnValue("mockedhash123456789012"),
 	})),
-	createCipheriv: vi.fn(),
-	createDecipheriv: vi.fn(),
-	randomBytes: vi.fn(() =>
-		Buffer.from("0123456789abcdef0123456789abcdef", "hex"),
-	),
+	createCipheriv: vi.fn(() => ({
+		update: vi.fn(() => "encrypted"),
+		final: vi.fn(() => "final"),
+		getAuthTag: vi.fn(() => Buffer.from("tag123")),
+	})),
+	createDecipheriv: vi.fn(() => ({
+		setAuthTag: vi.fn(),
+		update: vi.fn(() => "decrypted"),
+		final: vi.fn(() => ""),
+	})),
+	randomBytes: vi.fn((size: number) => {
+		if (size === 32) {
+			return Buffer.from("0123456789abcdef0123456789abcdef", "hex");
+		} else if (size === 16) {
+			return Buffer.from("0123456789abcdef", "hex");
+		}
+		return Buffer.alloc(size);
+	}),
 	scrypt: vi.fn(),
 }));
 
@@ -311,6 +325,45 @@ describe("persistence utilities", () => {
 
 			expect(mockMkdir).toHaveBeenCalledWith(mockDataDir, { recursive: true });
 		});
+
+		it("encrypts passwords when saving connections", async () => {
+			const connections: ConnectionInfo[] = [
+				{
+					id: "1",
+					name: "Test DB",
+					type: DBType.PostgreSQL,
+					connectionString: "postgres://user:password@localhost/test",
+					createdAt: "2023-01-01T00:00:00.000Z",
+					updatedAt: "2023-01-01T00:00:00.000Z",
+				},
+			];
+
+			await saveConnections(connections, true);
+
+			expect(mockWriteFile).toHaveBeenCalledWith(
+				path.join(mockDataDir, "connections.json"),
+				expect.stringContaining("postgres:user:********@localhost/test"),
+				"utf-8",
+			);
+		});
+
+		it("uses debounced writer when not flushing", async () => {
+			const connections: ConnectionInfo[] = [
+				{
+					id: "1",
+					name: "Test DB",
+					type: DBType.PostgreSQL,
+					connectionString: "postgres://localhost/test",
+					createdAt: "2023-01-01T00:00:00.000Z",
+					updatedAt: "2023-01-01T00:00:00.000Z",
+				},
+			];
+
+			await saveConnections(connections, false);
+
+			// Should not write immediately when flush=false
+			expect(mockWriteFile).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("loadQueryHistory", () => {
@@ -466,6 +519,50 @@ describe("persistence utilities", () => {
 			expect(result.skipped).toBe(0);
 		});
 
+		it("handles connections with corrupted encrypted passwords", async () => {
+			// This connection has encryptedPassword but invalid data, AND invalid type for legacy fallback
+			const corruptedConnection = {
+				id: "1",
+				name: "Test DB",
+				type: "invalid_type", // This will fail legacy parsing
+				connectionString: "postgres://user@host/db",
+				encryptedPassword: {
+					encrypted: "corrupted",
+					iv: "invalid",
+					tag: "invalid",
+				},
+				createdAt: "2023-01-01T00:00:00.000Z",
+				updatedAt: "2023-01-01T00:00:00.000Z",
+			};
+
+			mockReadFile.mockResolvedValue(JSON.stringify([corruptedConnection]));
+
+			const result = await loadConnections();
+
+			// The connection should be skipped due to both decryption failure and invalid legacy type
+			expect(result.connections).toEqual([]);
+			expect(result.skipped).toBe(1);
+		});
+
+		it("handles malformed connection data", async () => {
+			// Test data that fails legacy parsing due to invalid type
+			const malformedConnection = {
+				id: "1",
+				name: "Test DB",
+				type: "unsupported_db_type", // This will fail legacy parsing
+				connectionString: "", // Empty connection string also fails
+				createdAt: "2023-01-01T00:00:00.000Z",
+				updatedAt: "2023-01-01T00:00:00.000Z",
+			};
+
+			mockReadFile.mockResolvedValue(JSON.stringify([malformedConnection]));
+
+			const result = await loadConnections();
+
+			expect(result.connections).toEqual([]);
+			expect(result.skipped).toBe(1);
+		});
+
 		it("handles mixed valid and invalid data gracefully", async () => {
 			const mixedConnections = [
 				{
@@ -520,6 +617,135 @@ describe("persistence utilities", () => {
 			);
 
 			expect(result).toBe("sqlite:///path/to/db.sqlite");
+		});
+	});
+
+	describe("encryption key management", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+		});
+
+		it("loads existing valid encryption key", async () => {
+			const existingKey = Buffer.from("12345678901234567890123456789012");
+			mockAccess.mockResolvedValue(undefined); // File exists
+			mockReadFile.mockResolvedValue(existingKey);
+
+			const result = await __persistenceInternals.getEncryptionKey();
+
+			expect(result).toEqual(existingKey);
+			expect(mockAccess).toHaveBeenCalledWith(
+				path.join(mockDataDir, "encryption.key"),
+				constants.F_OK,
+			);
+			expect(mockReadFile).toHaveBeenCalledWith(
+				path.join(mockDataDir, "encryption.key"),
+			);
+		});
+
+		it("ignores invalid key length and generates new key", async () => {
+			const invalidKey = Buffer.from("short");
+			mockAccess.mockResolvedValue(undefined); // File exists
+			mockReadFile.mockResolvedValue(invalidKey);
+
+			const result = await __persistenceInternals.getEncryptionKey();
+
+			expect(result).toEqual(
+				Buffer.from("0123456789abcdef0123456789abcdef", "hex"),
+			);
+			expect(mockWriteFile).toHaveBeenCalledWith(
+				path.join(mockDataDir, "encryption.key"),
+				Buffer.from("0123456789abcdef0123456789abcdef", "hex"),
+			);
+		});
+
+		it("generates new key when file doesn't exist", async () => {
+			mockAccess.mockRejectedValue(new Error("ENOENT")); // File doesn't exist
+
+			const result = await __persistenceInternals.getEncryptionKey();
+
+			expect(result).toEqual(
+				Buffer.from("0123456789abcdef0123456789abcdef", "hex"),
+			);
+			expect(mockMkdir).toHaveBeenCalledWith(mockDataDir, { recursive: true });
+			expect(mockWriteFile).toHaveBeenCalledWith(
+				path.join(mockDataDir, "encryption.key"),
+				Buffer.from("0123456789abcdef0123456789abcdef", "hex"),
+			);
+		});
+
+		it("handles read errors gracefully and generates new key", async () => {
+			mockAccess.mockResolvedValue(undefined); // File exists
+			mockReadFile.mockRejectedValue(new Error("Read failed"));
+
+			const result = await __persistenceInternals.getEncryptionKey();
+
+			expect(result).toEqual(
+				Buffer.from("0123456789abcdef0123456789abcdef", "hex"),
+			);
+			expect(mockWriteFile).toHaveBeenCalledWith(
+				path.join(mockDataDir, "encryption.key"),
+				Buffer.from("0123456789abcdef0123456789abcdef", "hex"),
+			);
+		});
+	});
+
+	describe("password encryption/decryption", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+		});
+
+		it("encrypts and decrypts password correctly", async () => {
+			const password = "secret123";
+			const mockCipher = {
+				update: vi.fn().mockReturnValue("encrypted"),
+				final: vi.fn().mockReturnValue("final"),
+				getAuthTag: vi.fn().mockReturnValue(Buffer.from("tag123")),
+			};
+			const mockDecipher = {
+				setAuthTag: vi.fn(),
+				update: vi.fn().mockReturnValue("decrypted"),
+				final: vi.fn().mockReturnValue(""),
+			};
+
+			(createCipheriv as any).mockReturnValue(mockCipher);
+			(createDecipheriv as any).mockReturnValue(mockDecipher);
+
+			const encrypted = await __persistenceInternals.encryptPassword(password);
+			expect(encrypted).toEqual({
+				encrypted: "encryptedfinal",
+				iv: "0123456789abcdef", // hex of the 16-byte mock iv
+				tag: "746167313233", // hex of "tag123"
+			});
+
+			const decrypted = await __persistenceInternals.decryptPassword(encrypted);
+			expect(decrypted).toBe("decrypted");
+		});
+
+		it("handles encryption errors", async () => {
+			const password = "secret123";
+			(createCipheriv as any).mockImplementation(() => {
+				throw new Error("Encryption failed");
+			});
+
+			await expect(
+				__persistenceInternals.encryptPassword(password),
+			).rejects.toThrow("Encryption failed");
+		});
+
+		it("handles decryption errors", async () => {
+			const encryptedData = {
+				encrypted: "encrypted",
+				iv: "0123456789abcdef",
+				tag: "746167313233",
+			};
+
+			(createDecipheriv as any).mockImplementation(() => {
+				throw new Error("Decryption failed");
+			});
+
+			await expect(
+				__persistenceInternals.decryptPassword(encryptedData),
+			).rejects.toThrow("Decryption failed");
 		});
 	});
 
