@@ -1,3 +1,4 @@
+import { encode } from "@toon-format/toon";
 import { mkdir, writeFile } from "fs/promises";
 import { homedir } from "os";
 import { join } from "path";
@@ -5,7 +6,7 @@ import type { ColumnInfo, DataRow, TableInfo } from "../types/state.js";
 import { formatValueForDisplay } from "./data-processing.js";
 
 export interface ExportOptions {
-	format: "csv" | "json";
+	format: "csv" | "json" | "toon";
 	includeHeaders: boolean;
 	filename?: string;
 	outputDir?: string;
@@ -29,8 +30,12 @@ export async function exportData(
 
 	if (options.format === "csv") {
 		content = generateCSV(data, columns, options.includeHeaders);
-	} else {
+	} else if (options.format === "json") {
 		content = generateJSON(data, columns, options.includeHeaders);
+	} else if (options.format === "toon") {
+		content = generateTOON(data, columns, options.includeHeaders);
+	} else {
+		throw new Error(`Unsupported export format: ${options.format}`);
 	}
 
 	await writeFile(filepath, content, "utf-8");
@@ -87,6 +92,31 @@ function generateJSON(
 		return JSON.stringify(metadata, null, 2);
 	} else {
 		return JSON.stringify(data, null, 2);
+	}
+}
+
+function generateTOON(
+	data: DataRow[],
+	columns: ColumnInfo[],
+	includeHeaders: boolean,
+): string {
+	if (includeHeaders) {
+		// Include metadata about columns in TOON format
+		const metadata = {
+			exportedAt: new Date().toISOString(),
+			columns: columns.map((col) => ({
+				name: col.name,
+				dataType: col.dataType,
+				nullable: col.nullable,
+				isPrimaryKey: col.isPrimaryKey,
+				isForeignKey: col.isForeignKey,
+			})),
+			rowCount: data.length,
+			data: data,
+		};
+		return encode(metadata);
+	} else {
+		return encode(data);
 	}
 }
 
@@ -177,6 +207,34 @@ export function exportToJsonString(
 		return JSON.stringify(metadata, null, 2);
 	} else {
 		return JSON.stringify(data, null, 2);
+	}
+}
+
+/**
+ * Programmatic TOON export for AI agents
+ * Returns data as TOON string without writing to file
+ */
+export function exportToToonString(
+	data: DataRow[],
+	columns?: ColumnInfo[],
+	includeMetadata = true,
+): string {
+	if (includeMetadata && columns) {
+		const metadata = {
+			exportedAt: new Date().toISOString(),
+			columns: columns.map((col) => ({
+				name: col.name,
+				dataType: col.dataType,
+				nullable: col.nullable,
+				isPrimaryKey: col.isPrimaryKey,
+				isForeignKey: col.isForeignKey,
+			})),
+			rowCount: data.length,
+			data: data,
+		};
+		return encode(metadata);
+	} else {
+		return encode(data);
 	}
 }
 

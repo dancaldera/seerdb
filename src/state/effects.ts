@@ -1186,7 +1186,7 @@ function buildSearchQueries(
 export async function exportTableData(
 	dispatch: AppDispatch,
 	state: AppState,
-	format: "csv" | "json",
+	format: "csv" | "json" | "toon",
 	includeHeaders: boolean,
 ): Promise<void> {
 	if (state.dataRows.length === 0 || state.columns.length === 0) {

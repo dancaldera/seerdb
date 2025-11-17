@@ -1,5 +1,6 @@
 import { createDatabaseConnection } from "./database/connection.js";
 import type { DBType } from "./types/state.js";
+import { exportToJsonString, exportToToonString } from "./utils/export.js";
 
 export interface DatabaseConfig {
 	type: DBType;
@@ -321,6 +322,75 @@ export class SeerDBAgent {
 				`Transaction failed: ${error instanceof Error ? error.message : String(error)}`,
 			);
 		}
+	}
+
+	/**
+	 * Export query results in various formats optimized for AI agents
+	 */
+	async exportData(
+		result: QueryResult,
+		format: "json" | "toon" | "csv" = "json",
+		options: {
+			includeMetadata?: boolean;
+			delimiter?: "," | "\t" | "|";
+		} = {},
+	): Promise<string> {
+		const { includeMetadata = true, delimiter = "," } = options;
+
+		if (format === "json") {
+			return exportToJsonString(result.rows, undefined, includeMetadata);
+		} else if (format === "toon") {
+			return exportToToonString(result.rows, undefined, includeMetadata);
+		} else if (format === "csv") {
+			// Simple CSV export for agents
+			const headers = result.columns || [];
+			const csvLines = [];
+
+			if (includeMetadata && headers.length > 0) {
+				csvLines.push(headers.join(delimiter));
+			}
+
+			for (const row of result.rows) {
+				const values = headers.map((col) => {
+					const value = row[col];
+					// Simple CSV escaping
+					const str = String(value ?? "");
+					return str.includes(delimiter) ||
+						str.includes('"') ||
+						str.includes("\n")
+						? `"${str.replace(/"/g, '""')}"`
+						: str;
+				});
+				csvLines.push(values.join(delimiter));
+			}
+
+			return csvLines.join("\n");
+		} else {
+			throw new Error(`Unsupported export format: ${format}`);
+		}
+	}
+
+	/**
+	 * Export table data in TOON format (optimized for LLM prompts)
+	 */
+	async exportTableToToon(
+		tableName: string,
+		options: {
+			limit?: number;
+			where?: string;
+			orderBy?: string;
+			includeMetadata?: boolean;
+		} = {},
+	): Promise<string> {
+		const { limit = 1000, where, orderBy, includeMetadata = true } = options;
+
+		let sql = `SELECT * FROM ${tableName}`;
+		if (where) sql += ` WHERE ${where}`;
+		if (orderBy) sql += ` ORDER BY ${orderBy}`;
+		sql += ` LIMIT ${limit}`;
+
+		const result = await this.query(sql, { skipLimitWarning: true });
+		return this.exportData(result, "toon", { includeMetadata });
 	}
 
 	/**

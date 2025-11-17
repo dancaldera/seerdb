@@ -110,7 +110,7 @@ export type AppAction =
 	| { type: ActionType.SetFilterValue; filterValue: string }
 	| {
 			type: ActionType.ExportData;
-			format: "csv" | "json";
+			format: "csv" | "json" | "toon";
 			includeHeaders: boolean;
 	  }
 	| { type: ActionType.SetShowCommandHints; show: boolean }
