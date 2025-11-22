@@ -25,7 +25,7 @@ const main = async () => {
 		try {
 			const header =
 				"# SeerDB Agent API Documentation\n# Use this context for AI agents to understand SeerDB capabilities\n\n";
-			const helpOutput = execSync("seerdb --agent-help", { encoding: "utf8" });
+			const helpOutput = execSync("sdb --agent-help", { encoding: "utf8" });
 			const fullContent = header + helpOutput;
 
 			// Try different clipboard commands

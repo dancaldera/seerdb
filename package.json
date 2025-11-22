@@ -1,18 +1,18 @@
 {
 	"name": "seerdb",
-	"version": "0.5.1",
+	"version": "0.5.2",
 	"description": "Terminal-based database explorer rewritten in Bun/TypeScript",
 	"type": "module",
 	"main": "dist/index.js",
 	"bin": {
-		"seerdb": "./dist/index.js"
+		"sdb": "./dist/index.js"
 	},
 	"scripts": {
 		"dev": "bun --watch src/index.tsx",
 		"build": "bun run build:bundle && bun run build:compile",
 		"build:bundle": "esbuild src/index.tsx --bundle --platform=node --target=node18 --outfile=dist/index.js --format=esm --minify --external:bun:sqlite",
-		"build:compile": "bun build src/index.tsx --compile --outfile dist/seerdb --target bun --minify --external bun:sqlite --loader .wasm=file && cp node_modules/yoga-wasm-web/dist/yoga.wasm dist/ && bun run build:wrapper",
-		"build:wrapper": "echo '#!/usr/bin/env bash\n# Wrapper script for SeerDB executable\nSCRIPT_DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" && pwd )\"\ncd \"$SCRIPT_DIR\" && exec ./seerdb \"$@\"' > dist/seerdb.sh && chmod +x dist/seerdb.sh",
+		"build:compile": "bun scripts/patch-ink.ts && bun build src/index.tsx --compile --outfile dist/sdb --target bun --minify --external bun:sqlite",
+		"build:wrapper": "echo '#Wrapper no longer needed with ASM patch'",
 		"build:exe": "bun run build:compile",
 		"start": "bun dist/index.js",
 		"test": "bun test",

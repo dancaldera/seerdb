@@ -40,11 +40,14 @@ cd seerdb
 # Install dependencies
 bun install
 
-# Build and install globally
-bun run build && sudo cp ~/.local/bin/seerdb /usr/local/bin/seerdb
+# Build (produces a self-contained binary)
+bun run build
+
+# Install globally
+sudo cp dist/sdb /usr/local/bin/sdb
 
 # Run from anywhere
-seerdb
+sdb
 ```
 
 ### Option 2: Development Installation
@@ -58,9 +61,11 @@ bun install
 # Add to PATH (add to ~/.zshrc or ~/.bashrc)
 export PATH="$HOME/.local/bin:$PATH"
 
-# Build and create symlink
+# Build
 bun run build
-ln -sf "$(pwd)/dist/seerdb.sh" ~/.local/bin/seerdb
+
+# Create symlink directly to binary
+ln -sf "$(pwd)/dist/sdb" ~/.local/bin/sdb
 ```
 
 ### Development Mode
@@ -81,7 +86,7 @@ bun run type-check
 ### Interactive Mode (Default)
 
 ```bash
-seerdb
+sdb
 ```
 
 Navigate with keyboard shortcuts:
@@ -97,32 +102,32 @@ Navigate with keyboard shortcuts:
 
 ```bash
 # Quick PostgreSQL query
-seerdb --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT * FROM users LIMIT 10"
+sdb --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT * FROM users LIMIT 10"
 
 # Connect to SQLite database
-seerdb --db-type sqlite --connect /path/to/database.sqlite --query "SELECT * FROM table1"
+sdb --db-type sqlite --connect /path/to/database.sqlite --query "SELECT * FROM table1"
 
 # Use connection string
-seerdb --connect "postgresql://user:password@localhost:5432/mydb" --query "SELECT COUNT(*) FROM users"
+sdb --connect "postgresql://user:password@localhost:5432/mydb" --query "SELECT COUNT(*) FROM users"
 
 # List saved connections
-seerdb --list-connections
+sdb --list-connections
 
 # Use saved connection by name
-seerdb --connection-name "Production DB" --query "SELECT * FROM products"
+sdb --connection-name "Production DB" --query "SELECT * FROM products"
 ```
 
 #### Output Formats
 
 ```bash
 # Table format (default)
-seerdb --headless --query "SELECT * FROM users" --output table
+sdb --headless --query "SELECT * FROM users" --output table
 
 # JSON format
-seerdb --headless --query "SELECT * FROM users" --output json
+sdb --headless --query "SELECT * FROM users" --output json
 
 # TOON format (optimized for AI agents - 30-60% fewer tokens)
-seerdb --headless --query "SELECT * FROM users LIMIT 5" --output toon
+sdb --headless --query "SELECT * FROM users LIMIT 5" --output toon
 ```
 
 ### 🤖 AI Agent Mode
@@ -133,17 +138,17 @@ SeerDB includes comprehensive support for AI agents with **TOON format** optimiz
 
 ```bash
 # TOON format (default for AI agents)
-seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
+sdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
 
 # JSON output
-seerdb --headless --db-type mysql --host localhost --database mydb --query "SELECT id, name FROM users WHERE active = true" --output json
+sdb --headless --db-type mysql --host localhost --database mydb --query "SELECT id, name FROM users WHERE active = true" --output json
 ```
 
 #### API Mode for Interactive Control
 
 ```bash
 # Start API mode
-seerdb --api
+sdb --api
 ```
 
 Send JSON commands via stdin:
@@ -176,7 +181,7 @@ await agent.disconnect();
 
 ```bash
 # Copy agent documentation to clipboard for AI agent conversations
-seerdb --copy
+sdb --copy
 ```
 
 This command copies the complete agent documentation (AGENTS.md) to your clipboard, allowing you to easily paste it into AI agent conversations for proper usage guidance.
@@ -187,11 +192,11 @@ This command copies the complete agent documentation (AGENTS.md) to your clipboa
 
 ```bash
 # ✅ Safe: Use saved connections by ID
-seerdb --list-connections --output json  # Get connection IDs
-seerdb --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT * FROM users"
+sdb --list-connections --output json  # Get connection IDs
+sdb --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT * FROM users"
 
 # ✅ Safe: Use connection without password in command
-seerdb --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT 1"
+sdb --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT 1"
 
 # ❌ Unsafe: Don't share passwords or complete connection strings
 ```

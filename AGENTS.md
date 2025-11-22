@@ -119,7 +119,7 @@ await agent.disconnect();
 ### API Mode (Interactive JSON)
 
 ```bash
-seerdb --api
+sdb --api
 ```
 
 Send JSON commands via stdin:
@@ -134,13 +134,13 @@ Send JSON commands via stdin:
 
 ```bash
 # 🔄 AI AGENTS: Use TOON format (default for agents, 30-60% fewer tokens)
-seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
+sdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
 
 # 👥 HUMANS: Use JSON format (readable, standard interchange)
-seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output json
+sdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output json
 
 # 🔄 AI AGENTS: List saved connections in TOON format
-seerdb --headless --list-connections --output toon
+sdb --headless --list-connections --output toon
 ```
 
 ## Security Features
@@ -166,7 +166,7 @@ seerdb --headless --list-connections --output toon
 **Option 1: Use Interactive Mode**
 ```bash
 # Launch SeerDB interactively to add connections safely
-seerdb
+sdb
 
 # Then use the UI to:
 # 1. Select database type (PostgreSQL, MySQL, SQLite)
@@ -177,28 +177,28 @@ seerdb
 **Option 2: Use Command Line (without exposing passwords)**
 ```bash
 # For PostgreSQL (password will be prompted or use existing auth)
-seerdb --headless --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT 1"
+sdb --headless --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT 1"
 
 # For MySQL
-seerdb --headless --db-type mysql --host localhost --database mydb --user myuser --query "SELECT 1"
+sdb --headless --db-type mysql --host localhost --database mydb --user myuser --query "SELECT 1"
 
 # For SQLite
-seerdb --headless --db-type sqlite --connect /path/to/database.db --query "SELECT 1"
+sdb --headless --db-type sqlite --connect /path/to/database.db --query "SELECT 1"
 ```
 
 **Option 3: Use Saved Connections**
 ```bash
 # List existing saved connections (shows ID, name, type, masked connection string)
-seerdb --headless --list-connections --output toon
+sdb --headless --list-connections --output toon
 
 # Use a saved connection by name (human-readable)
-seerdb --headless --connection-name "My Database" --query "SELECT * FROM users LIMIT 10"
+sdb --headless --connection-name "My Database" --query "SELECT * FROM users LIMIT 10"
 
 # Use a saved connection by ID (most reliable for automation)
-seerdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT * FROM users LIMIT 10"
+sdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT * FROM users LIMIT 10"
 
 # Use saved connection in API mode
-echo '{"type": "connect", "payload": {"type": "use_saved", "name": "My Database"}}' | seerdb --api
+echo '{"type": "connect", "payload": {"type": "use_saved", "name": "My Database"}}' | sdb --api
 ```
 
 ### Connection IDs: The Reliable Method
@@ -207,7 +207,7 @@ echo '{"type": "connect", "payload": {"type": "use_saved", "name": "My Database"
 
 ```bash
 # List connections to see their IDs
-seerdb --headless --list-connections --output toon
+sdb --headless --list-connections --output toon
 
 # Output shows:
 # [
@@ -220,7 +220,7 @@ seerdb --headless --list-connections --output toon
 # ]
 
 # Use the ID for reliable programmatic access
-seerdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_name FROM information_schema.tables"
+sdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_name FROM information_schema.tables"
 ```
 
 **Why use connection IDs:**
@@ -247,7 +247,7 @@ seerdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_
 ### Example Safe Instructions
 
 **Instead of asking for credentials:**
-> "Please run `seerdb` to open the interactive interface, then add your database connection there. Once saved, you can use it in our sessions."
+> "Please run `sdb` to open the interactive interface, then add your database connection there. Once saved, you can use it in our sessions."
 
 **Instead of sharing connection strings:**
 > "Add your database connection using the SeerDB interface with a name like 'project_db', then I can help you query it using that saved connection."
@@ -371,19 +371,19 @@ const data = await agent.getTableData("users", {
 
 ```bash
 # 🔄 AI AGENTS: PostgreSQL query in TOON format (default for agents)
-seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT 1" --output toon
+sdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT 1" --output toon
 
 # 🔄 AI AGENTS: MySQL query in TOON format (specify explicitly for clarity)
-seerdb --headless --db-type mysql --host localhost --database mydb --user myuser --password mypass --query "SELECT * FROM users LIMIT 10" --output toon
+sdb --headless --db-type mysql --host localhost --database mydb --user myuser --password mypass --query "SELECT * FROM users LIMIT 10" --output toon
 
 # 🔄 AI AGENTS: SQLite query in TOON format
-seerdb --headless --db-type sqlite --connect /path/to/db.sqlite --query "SELECT * FROM table1" --output toon
+sdb --headless --db-type sqlite --connect /path/to/db.sqlite --query "SELECT * FROM table1" --output toon
 
 # 🔄 AI AGENTS: List connections in TOON format
-seerdb --headless --list-connections --output toon
+sdb --headless --list-connections --output toon
 
 # 👥 HUMANS: Same queries but in JSON format for readability
-seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output json
+sdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output json
 ```
 
 ## Database Support
@@ -538,8 +538,8 @@ import type {
 For more information about SeerDB agent capabilities:
 
 ```bash
-seerdb --agent-help    # Show this help information
-seerdb -h              # Show all command line options
+sdb --agent-help    # Show this help information
+sdb -h              # Show all command line options
 ```
 
 **🤖 End of AI Agent Documentation.** These rules and guidelines are mandatory for all AI agent interactions with SeerDB. Always prioritize security, use TOON format for data exchange, and follow the safety protocols outlined in this document.

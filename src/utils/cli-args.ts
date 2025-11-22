@@ -101,7 +101,7 @@ SeerDB - Terminal Database Explorer
 AI Agents: Use --agent-help for comprehensive API documentation and usage examples.
 
 USAGE:
-  seerdb [OPTIONS]
+  sdb [OPTIONS]
 
  MODES:
    --api, -a                    Run in API mode for programmatic control
@@ -135,31 +135,31 @@ DATABASE SUPPORT:
 
 EXAMPLES:
   # Interactive mode (default)
-  seerdb
+  sdb
 
   # Connect to PostgreSQL and run a query
-  seerdb --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT * FROM users"
+  sdb --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT * FROM users"
 
   # Connect to SQLite file
-  seerdb --db-type sqlite --connect /path/to/db.sqlite --query "SELECT * FROM table1"
+  sdb --db-type sqlite --connect /path/to/db.sqlite --query "SELECT * FROM table1"
 
   # API mode for programmatic control
-  seerdb --api
+  sdb --api
 
   # Headless mode with JSON output
-  seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users" --output json
+  sdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users" --output json
 
   # Headless mode with TOON output (optimized for AI agents - 30-60% fewer tokens)
-  seerdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
+  sdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
 
   # List saved connections (shows ID, name, type, masked connection string)
-  seerdb --headless --list-connections --output toon
+  sdb --headless --list-connections --output toon
 
   # Use saved connection by ID (most reliable for automation)
-  seerdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_name FROM information_schema.tables"
+  sdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_name FROM information_schema.tables"
 
   # Use saved connection by name
-  seerdb --headless --connection-name "My Database" --query "SELECT * FROM users LIMIT 10"
+  sdb --headless --connection-name "My Database" --query "SELECT * FROM users LIMIT 10"
 
 SECURITY NOTES:
   - Passwords are encrypted at rest and masked in output
@@ -177,7 +177,7 @@ TOON FORMAT (AI Agent Optimized):
   data[1]{id,name,role}:
     1,Alice,admin
 
-For complete AI agent documentation, see AGENTS.md or run: seerdb --agent-help
+For complete AI agent documentation, see AGENTS.md or run: sdb --agent-help
 `);
 };
 
