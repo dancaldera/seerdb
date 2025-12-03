@@ -8,6 +8,28 @@ SeerDB is a fast terminal tool for exploring databases. Navigate with your keybo
 
 Built with TypeScript, React (Ink), and Bun native modules for maximum performance.
 
+---
+
+## 🤖 For AI Agents (OpenCode.ai Ready)
+
+**3-Step Integration:**
+
+```bash
+# 1. Copy full documentation
+sdb --copy
+
+# 2. Paste into OpenCode.ai
+# (Documentation is in your clipboard!)
+
+# 3. Use simple commands
+sdb --headless --list-connections --output toon
+sdb --headless --connection-id "ID" --query "SELECT * FROM table LIMIT 10" --output toon
+```
+
+**See AGENTS.md for complete guide.**
+
+---
+
 ## ✨ Features
 
 - 🗄️ **Multi-Database**: PostgreSQL, MySQL, SQLite
