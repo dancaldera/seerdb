@@ -4,11 +4,11 @@
 
 This guide explains how AI agents can programmatically interact with SeerDB, the terminal-based database explorer.
 
-## Quick Install (macOS)
+## Quick Install (macOS and Linux)
 
 ```bash
-# One-line installation for macOS
-curl -fsSL https://raw.githubusercontent.com/dancaldera/seerdb/main/scripts/install.sh | zsh
+# One-line installation for macOS and Linux
+curl -fsSL https://raw.githubusercontent.com/dancaldera/seerdb/main/scripts/install.sh | bash
 ```
 
 After installation, verify SeerDB is working:

@@ -1,7 +1,7 @@
-#!/bin/zsh
+#!/bin/bash
 
-# SeerDB Installation Script for macOS (Zsh)
-# Usage: curl -fsSL https://raw.githubusercontent.com/dancaldera/seerdb/main/scripts/install.sh | zsh
+# SeerDB Installation Script for macOS and Linux
+# Usage: curl -fsSL https://raw.githubusercontent.com/dancaldera/seerdb/main/scripts/install.sh | bash
 
 set -e
 
@@ -34,26 +34,55 @@ error() {
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
 echo "║                  SeerDB Installer                    ║"
-echo "║         Terminal Database Explorer for macOS         ║"
+echo "║       Terminal Database Explorer for macOS/Linux     ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
 
-# Check if running on macOS
+# Detect OS
 info "Checking system compatibility..."
-if [[ "$OSTYPE" != "darwin"* ]]; then
-    error "This installer is designed for macOS. For other platforms, please visit: https://github.com/dancaldera/seerdb"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    OS="macOS"
+    success "System check passed - macOS detected"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    OS="Linux"
+    success "System check passed - Linux detected"
+else
+    error "Unsupported operating system: $OSTYPE. Please visit: https://github.com/dancaldera/seerdb"
 fi
-success "System check passed - macOS detected"
 
 # Check for required commands
 info "Checking required commands..."
-command -v git >/dev/null 2>&1 || error "git is required but not installed. Please install Xcode Command Line Tools."
+if ! command -v git >/dev/null 2>&1; then
+    if [[ "$OS" == "macOS" ]]; then
+        error "git is required but not installed. Please install Xcode Command Line Tools."
+    else
+        error "git is required but not installed. Please install git using your package manager (e.g., sudo apt install git)"
+    fi
+fi
 
 # Check if Bun is installed, if not install it
 info "Checking for Bun runtime..."
 if ! command -v bun &> /dev/null; then
     warning "Bun not found. Installing Bun..."
+
+    # Detect package manager for Linux
+    if [[ "$OS" == "Linux" ]]; then
+        if command -v apt-get >/dev/null 2>&1; then
+            PKG_MANAGER="apt-get"
+        elif command -v yum >/dev/null 2>&1; then
+            PKG_MANAGER="yum"
+        elif command -v dnf >/dev/null 2>&1; then
+            PKG_MANAGER="dnf"
+        elif command -v pacman >/dev/null 2>&1; then
+            PKG_MANAGER="pacman"
+        else
+            info "Could not detect package manager. Using Bun installer..."
+        fi
+    fi
+
+    # Install Bun
     curl -fsSL https://bun.sh/install | bash
+
     # Add Bun to current session
     export BUN_INSTALL="$HOME/.bun"
     export PATH="$BUN_INSTALL/bin:$PATH"
@@ -97,14 +126,28 @@ ln -sf "$REPO_DIR/dist/sdb" "$SYMLINK_PATH"
 if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
     info "Adding $INSTALL_DIR to PATH..."
 
-    # Detect shell configuration file
+    # Detect shell configuration file based on OS
     SHELL_CONFIG=""
-    if [[ -f "$HOME/.zshrc" ]]; then
-        SHELL_CONFIG="$HOME/.zshrc"
-    elif [[ -f "$HOME/.zprofile" ]]; then
-        SHELL_CONFIG="$HOME/.zprofile"
-    elif [[ -f "$HOME/.bash_profile" ]]; then
-        SHELL_CONFIG="$HOME/.bash_profile"
+    if [[ "$OS" == "macOS" ]]; then
+        # macOS - prioritize zsh, then bash
+        if [[ -f "$HOME/.zshrc" ]]; then
+            SHELL_CONFIG="$HOME/.zshrc"
+        elif [[ -f "$HOME/.zprofile" ]]; then
+            SHELL_CONFIG="$HOME/.zprofile"
+        elif [[ -f "$HOME/.bash_profile" ]]; then
+            SHELL_CONFIG="$HOME/.bash_profile"
+        fi
+    else
+        # Linux - prioritize bash, then zsh
+        if [[ -f "$HOME/.bashrc" ]]; then
+            SHELL_CONFIG="$HOME/.bashrc"
+        elif [[ -f "$HOME/.profile" ]]; then
+            SHELL_CONFIG="$HOME/.profile"
+        elif [[ -f "$HOME/.bash_profile" ]]; then
+            SHELL_CONFIG="$HOME/.bash_profile"
+        elif [[ -f "$HOME/.zshrc" ]]; then
+            SHELL_CONFIG="$HOME/.zshrc"
+        fi
     fi
 
     if [[ -n "$SHELL_CONFIG" ]]; then
@@ -114,11 +157,16 @@ if ! echo "$PATH" | grep -q "$INSTALL_DIR"; then
             echo "# Added by SeerDB installer" >> "$SHELL_CONFIG"
             echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> "$SHELL_CONFIG"
             success "PATH updated in $SHELL_CONFIG"
-            warning "Please run 'source $SHELL_CONFIG' or restart your terminal to use sdb"
+            if [[ "$OS" == "macOS" ]]; then
+                warning "Please run 'source $SHELL_CONFIG' or restart your terminal to use sdb"
+            else
+                warning "Please run 'source $SHELL_CONFIG' or restart your terminal to use sdb"
+            fi
         fi
     else
         warning "Could not detect shell configuration file"
-        warning "Please add $INSTALL_DIR to your PATH manually"
+        warning "Please add $INSTALL_DIR to your PATH manually:"
+        echo "  export PATH=\"$INSTALL_DIR:\$PATH\""
     fi
 else
     success "PATH already configured"

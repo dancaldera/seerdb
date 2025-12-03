@@ -26,15 +26,15 @@ Built with TypeScript, React (Ink), and Bun native modules for maximum performan
 
 ## 🚀 Installation
 
-### Quick Install (macOS)
+### Quick Install (macOS and Linux)
 
 ```bash
-# One-line installation for macOS
-curl -fsSL https://raw.githubusercontent.com/dancaldera/seerdb/main/scripts/install.sh | zsh
+# One-line installation for macOS and Linux
+curl -fsSL https://raw.githubusercontent.com/dancaldera/seerdb/main/scripts/install.sh | bash
 ```
 
 **That's it!** The installer will:
-- ✅ Check system compatibility
+- ✅ Check system compatibility (macOS and Linux)
 - ✅ Install Bun runtime (if needed)
 - ✅ Clone and build SeerDB
 - ✅ Create symlink in `~/.local/bin`
@@ -42,7 +42,7 @@ curl -fsSL https://raw.githubusercontent.com/dancaldera/seerdb/main/scripts/inst
 
 ### Prerequisites
 
-- macOS (Intel or Apple Silicon)
+- macOS or Linux
 - [Bun](https://bun.sh) 1.0+ (auto-installed if missing)
 - Git (for cloning repository)
 
