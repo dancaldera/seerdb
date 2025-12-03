@@ -60,22 +60,36 @@ const main = async () => {
 					}
 				}
 
-				if (!agentsMdPath) {
-					throw new Error("AGENTS.md not found in any expected location");
-				}
+				let agentsContent: string;
 
-				const agentsContent = readFileSync(agentsMdPath, "utf-8");
+				if (agentsMdPath) {
+					// Load from local file
+					agentsContent = readFileSync(agentsMdPath, "utf-8");
+				} else {
+					// Fallback: fetch from GitHub
+					console.log("📥 Downloading SeerDB agent documentation from GitHub...");
+					const githubUrl = "https://raw.githubusercontent.com/dancaldera/seerdb/main/AGENTS.md";
+					const response = await fetch(githubUrl);
+
+					if (!response.ok) {
+						throw new Error(`Failed to fetch AGENTS.md from GitHub: ${response.statusText}`);
+					}
+
+					agentsContent = await response.text();
+				}
 
 				// Combine documentation with user message
 				const fullPrompt =
 					header + agentsContent + "\n\n---\n\nUser Request:\n" + message;
 
 				// Run opencode with the combined prompt
-				const opencodeArgs = ["run", "-m", finalModel, "-p", fullPrompt];
-
 				console.log("🚀 Running OpenCode.ai with SeerDB context...");
-				execSync(`opencode ${opencodeArgs.map((arg) => `"${arg}"`).join(" ")}`, {
-					stdio: "inherit",
+
+				// Use stdin to pass the prompt to opencode
+				const command = `opencode run -m ${finalModel}`;
+				const child = execSync(command, {
+					input: fullPrompt,
+					stdio: ["pipe", "inherit", "inherit"],
 				});
 
 				process.exit(0);
@@ -122,11 +136,24 @@ const main = async () => {
 				}
 			}
 
-			if (!agentsMdPath) {
-				throw new Error("AGENTS.md not found in any expected location");
+			let agentsContent: string;
+
+			if (agentsMdPath) {
+				// Load from local file
+				agentsContent = readFileSync(agentsMdPath, "utf-8");
+			} else {
+				// Fallback: fetch from GitHub
+				console.log("📥 Downloading SeerDB agent documentation from GitHub...");
+				const githubUrl = "https://raw.githubusercontent.com/dancaldera/seerdb/main/AGENTS.md";
+				const response = await fetch(githubUrl);
+
+				if (!response.ok) {
+					throw new Error(`Failed to fetch AGENTS.md from GitHub: ${response.statusText}`);
+				}
+
+				agentsContent = await response.text();
 			}
 
-			const agentsContent = readFileSync(agentsMdPath, "utf-8");
 			const fullContent = header + agentsContent;
 
 			// Try different clipboard commands
