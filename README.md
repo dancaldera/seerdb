@@ -12,16 +12,16 @@ Built with TypeScript, React (Ink), and Bun native modules for maximum performan
 
 ## 🤖 For AI Agents (OpenCode.ai Ready)
 
-**3-Step Integration:**
+**Quick Start - 3 Options:**
 
 ```bash
-# 1. Copy full documentation
+# Option 1: Direct OpenCode.ai integration (NEW!)
+sdb opencode run "list all my connections" --model opencode/big-pickle
+
+# Option 2: Copy docs to clipboard, then paste into OpenCode.ai
 sdb --copy
 
-# 2. Paste into OpenCode.ai
-# (Documentation is in your clipboard!)
-
-# 3. Use simple commands
+# Option 3: Headless mode for automation
 sdb --headless --list-connections --output toon
 sdb --headless --connection-id "ID" --query "SELECT * FROM table LIMIT 10" --output toon
 ```
@@ -207,6 +207,21 @@ sdb --copy
 ```
 
 This command copies the complete agent documentation (AGENTS.md) to your clipboard, allowing you to easily paste it into AI agent conversations for proper usage guidance.
+
+#### OpenCode.ai Direct Integration
+
+```bash
+# Run with default model (opencode/big-pickle)
+sdb opencode run "list all my connections"
+
+# Run with custom model
+sdb opencode run "list all my connections" --model claude-sonnet
+
+# Copy agent documentation to clipboard (still works)
+sdb --copy
+```
+
+The `sdb opencode run` command automatically combines the SeerDB agent documentation with your message and runs OpenCode.ai with full context. Default model is `opencode/big-pickle`.
 
 #### 🔒 Security for AI Agents
 

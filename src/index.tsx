@@ -5,18 +5,95 @@ import { App } from "./App.js";
 import { runApiMode } from "./api-mode.js";
 import { runHeadlessMode } from "./headless-mode.js";
 import { registerInkInstance } from "./inkControl.js";
-import { parseCliArgs, showAgentHelp, showHelp } from "./utils/cli-args.js";
+import { parseCliArgs, showHelp } from "./utils/cli-args.js";
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
 
 const main = async () => {
+	// Handle opencode subcommand before parsing other args
+	if (process.argv[2] === "opencode") {
+		const opencodeArgs = process.argv.slice(3);
+		const subcommand = opencodeArgs[0];
+
+		if (subcommand === "run") {
+			// Parse arguments for "sdb opencode run"
+			const userMessageIndex = opencodeArgs.indexOf("run") + 1;
+			const message = opencodeArgs.slice(userMessageIndex).join(" ");
+
+			// Parse additional flags
+			const flags = opencodeArgs.slice(0, userMessageIndex);
+			let model: string | undefined;
+
+			// Extract --model flag
+			for (let i = 0; i < flags.length; i++) {
+				if (flags[i] === "--model" && flags[i + 1]) {
+					model = flags[i + 1];
+					break;
+				}
+			}
+
+			// Default model
+			const defaultModel = "opencode/big-pickle";
+			const finalModel = model || defaultModel;
+
+			// Get SeerDB agent documentation
+			try {
+				const header =
+					"# SeerDB Agent API Documentation\n# Use this context for AI agents to understand SeerDB capabilities\n\n";
+
+				// Try multiple possible locations for AGENTS.md
+				let agentsMdPath: string | null = null;
+				const possiblePaths = [
+					// When running from project root
+					join(process.cwd(), "AGENTS.md"),
+					// When running from dist/
+					join(process.cwd(), "..", "AGENTS.md"),
+					// When running as installed binary (try common locations)
+					"/usr/local/share/seerdb/AGENTS.md",
+					"/opt/seerdb/AGENTS.md",
+				];
+
+				for (const path of possiblePaths) {
+					if (existsSync(path)) {
+						agentsMdPath = path;
+						break;
+					}
+				}
+
+				if (!agentsMdPath) {
+					throw new Error("AGENTS.md not found in any expected location");
+				}
+
+				const agentsContent = readFileSync(agentsMdPath, "utf-8");
+
+				// Combine documentation with user message
+				const fullPrompt =
+					header + agentsContent + "\n\n---\n\nUser Request:\n" + message;
+
+				// Run opencode with the combined prompt
+				const opencodeArgs = ["run", "-m", finalModel, "-p", fullPrompt];
+
+				console.log("🚀 Running OpenCode.ai with SeerDB context...");
+				execSync(`opencode ${opencodeArgs.map((arg) => `"${arg}"`).join(" ")}`, {
+					stdio: "inherit",
+				});
+
+				process.exit(0);
+			} catch (error) {
+				console.error("Error running OpenCode.ai:", error);
+				process.exit(1);
+			}
+		} else {
+			console.error("Unknown opencode subcommand:", subcommand);
+			console.log("Supported subcommands: run");
+			process.exit(1);
+		}
+	}
+
 	const args = parseCliArgs();
 
 	if (args.help) {
 		showHelp();
-		process.exit(0);
-	}
-
-	if (args.agentHelp) {
-		showAgentHelp();
 		process.exit(0);
 	}
 
@@ -25,8 +102,32 @@ const main = async () => {
 		try {
 			const header =
 				"# SeerDB Agent API Documentation\n# Use this context for AI agents to understand SeerDB capabilities\n\n";
-			const helpOutput = execSync("sdb --agent-help", { encoding: "utf8" });
-			const fullContent = header + helpOutput;
+
+			// Try multiple possible locations for AGENTS.md
+			let agentsMdPath: string | null = null;
+			const possiblePaths = [
+				// When running from project root
+				join(process.cwd(), "AGENTS.md"),
+				// When running from dist/
+				join(process.cwd(), "..", "AGENTS.md"),
+				// When running as installed binary (try common locations)
+				"/usr/local/share/seerdb/AGENTS.md",
+				"/opt/seerdb/AGENTS.md",
+			];
+
+			for (const path of possiblePaths) {
+				if (existsSync(path)) {
+					agentsMdPath = path;
+					break;
+				}
+			}
+
+			if (!agentsMdPath) {
+				throw new Error("AGENTS.md not found in any expected location");
+			}
+
+			const agentsContent = readFileSync(agentsMdPath, "utf-8");
+			const fullContent = header + agentsContent;
 
 			// Try different clipboard commands
 			if (process.platform === "darwin") {

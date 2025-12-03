@@ -22,8 +22,6 @@ export interface CliArgs {
 	copy?: boolean;
 	/** Show help */
 	help?: boolean;
-	/** Show AI agent instructions */
-	agentHelp?: boolean;
 	/** Host for database connection */
 	host?: string;
 	/** Port for database connection */
@@ -53,7 +51,6 @@ export const parseCliArgs = (): CliArgs => {
 				headless: { type: "boolean" },
 				"list-connections": { type: "boolean" },
 				help: { type: "boolean", short: "h" },
-				"agent-help": { type: "boolean" },
 				copy: { type: "boolean" },
 				host: { type: "string" },
 				port: { type: "string" },
@@ -76,7 +73,6 @@ export const parseCliArgs = (): CliArgs => {
 			listConnections: values["list-connections"] as boolean,
 			copy: values.copy as boolean,
 			help: values.help as boolean,
-			agentHelp: values["agent-help"] as boolean,
 			host: values.host as string,
 			port: values.port ? parseInt(values.port as string, 10) : undefined,
 			database: values.database as string,
@@ -108,6 +104,10 @@ USAGE:
    --headless                   Run in headless mode (no TUI)
    --list-connections           List all saved connections
    --copy                       Copy agent documentation to clipboard
+
+ OPENCODE.AI INTEGRATION:
+   sdb opencode run "message"   Run OpenCode.ai with SeerDB context (default model: opencode/big-pickle)
+   sdb opencode run "message" --model <model>  Run with specific model
 
  CONNECTION OPTIONS:
   --db-type <type>             Database type: postgresql, mysql, sqlite
@@ -177,49 +177,6 @@ TOON FORMAT (AI Agent Optimized):
   data[1]{id,name,role}:
     1,Alice,admin
 
-For complete AI agent documentation, see AGENTS.md or run: sdb --agent-help
+For complete AI agent documentation, see AGENTS.md or run: sdb --copy
 `);
-};
-
-export const showAgentHelp = () => {
-	try {
-		let agentsMdPath: string | null = null;
-
-		// Try multiple possible locations for AGENTS.md
-		const possiblePaths = [
-			// When running from project root
-			join(process.cwd(), "AGENTS.md"),
-			// When running from dist/
-			join(process.cwd(), "..", "AGENTS.md"),
-			// When running as installed binary (try common locations)
-			"/usr/local/share/seerdb/AGENTS.md",
-			"/opt/seerdb/AGENTS.md",
-		];
-
-		for (const path of possiblePaths) {
-			try {
-				readFileSync(path, "utf-8");
-				agentsMdPath = path;
-				break;
-			} catch {
-				// Continue to next path
-			}
-		}
-
-		if (!agentsMdPath) {
-			throw new Error("AGENTS.md not found in any expected location");
-		}
-
-		const content = readFileSync(agentsMdPath, "utf-8");
-		console.log(content);
-	} catch (error) {
-		console.error("Error reading AGENTS.md:", error);
-		console.log(`
-# SeerDB AI Agent Documentation
-
-Unable to load AGENTS.md file. Please check that it exists in the project root.
-
-For more information about SeerDB agent capabilities, see the AGENTS.md file in the repository root.
-`);
-	}
 };
