@@ -1,22 +1,4 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from "bun:test";
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { constants } from "node:fs";
-import path from "node:path";
-import type {
-	ColumnInfo,
-	ConnectionInfo,
-	QueryHistoryItem,
-} from "../../src/types/state.js";
-import { DBType } from "../../src/types/state.js";
-import {
-	__persistenceInternals,
-	type ConnectionsLoadResult,
-	loadConnections,
-	loadQueryHistory,
-	saveConnections,
-	saveQueryHistory,
-	setPersistenceDataDirectory,
-} from "../../src/utils/persistence.js";
 
 // Mock crypto functions
 vi.mock("node:crypto", () => ({
@@ -63,8 +45,28 @@ vi.mock("node:fs", () => ({
 	},
 }));
 
-// Import mocks to configure them
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { constants } from "node:fs";
+import path from "node:path";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import type {
+	ColumnInfo,
+	ConnectionInfo,
+	QueryHistoryItem,
+} from "../../src/types/state.js";
+import { DBType } from "../../src/types/state.js";
+import {
+	__persistenceInternals,
+	type ConnectionsLoadResult,
+	loadConnections,
+	loadQueryHistory,
+	saveConnections,
+	saveQueryHistory,
+	setPersistenceDataDirectory,
+} from "../../src/utils/persistence.js";
+
+// Import mocks to configure them
+
 
 
 describe("persistence utilities", () => {
@@ -76,6 +78,7 @@ describe("persistence utilities", () => {
 		(mkdir as unknown as Mock<any>).mockResolvedValue(undefined);
 		(writeFile as unknown as Mock<any>).mockResolvedValue(undefined);
 		(access as unknown as Mock<any>).mockResolvedValue(undefined);
+		(readFile as unknown as Mock<any>).mockResolvedValue("");
 	});
 
 	describe("loadConnections", () => {

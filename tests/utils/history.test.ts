@@ -1,11 +1,12 @@
 import { afterAll, beforeEach, describe, expect, it, vi, type Mock } from "bun:test";
-import { nanoid } from "nanoid";
-import { DBType, ViewState } from "../../src/types/state.js";
-import { createHistoryEntry, historyHelpers } from "../../src/utils/history.js";
 
 vi.mock("nanoid", () => ({
 	nanoid: vi.fn(),
 }));
+
+import { nanoid } from "nanoid";
+import { DBType, ViewState } from "../../src/types/state.js";
+import { createHistoryEntry, historyHelpers } from "../../src/utils/history.js";
 
 describe("history utilities", () => {
 	// Set up fake timers for all tests
