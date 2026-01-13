@@ -39,6 +39,12 @@ vi.mock("node:fs/promises", () => ({
 	writeFile: mockWriteFile,
 	access: mockAccess,
 }));
+vi.mock("fs/promises", () => ({
+	mkdir: mockMkdir,
+	readFile: mockReadFile,
+	writeFile: mockWriteFile,
+	access: mockAccess,
+}));
 
 vi.mock("node:os", () => ({
 	homedir: vi.fn(() => "/home/user"),

@@ -609,7 +609,7 @@ describe("id-generator utilities", () => {
 		});
 
 		it("should handle loadConnections failure gracefully", async () => {
-			mockLoadConnections.mockRejectedValue(new Error("Load failed"));
+			mockLoadConnections.mockRejectedValue(new Error("Simulated Failure"));
 
 			const result = await validateConnectionNameComplete("Any Name");
 
