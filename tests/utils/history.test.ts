@@ -374,9 +374,18 @@ describe("history utilities", () => {
 		});
 
 		it("generates different random components", () => {
-			mockNanoid.mockImplementation(() =>
-				Math.random().toString(36).substring(2, 9),
-			);
+			// Use deterministic values instead of Math.random() for CI stability
+			mockNanoid
+				.mockReturnValueOnce("abc1234")
+				.mockReturnValueOnce("def5678")
+				.mockReturnValueOnce("ghi9012")
+				.mockReturnValueOnce("jkl3456")
+				.mockReturnValueOnce("mno7890")
+				.mockReturnValueOnce("pqr2345")
+				.mockReturnValueOnce("stu6789")
+				.mockReturnValueOnce("vwx0123")
+				.mockReturnValueOnce("yza4567")
+				.mockReturnValueOnce("bcd8901");
 
 			const entries = Array.from({ length: 10 }, () =>
 				createHistoryEntry(ViewState.Tables, "Test"),
@@ -385,8 +394,8 @@ describe("history utilities", () => {
 			const randomParts = entries.map((entry) => entry.id.split("-")[2]);
 			const uniqueRandomParts = new Set(randomParts);
 
-			// With 10 entries, we should have very few if any collisions
-			expect(uniqueRandomParts.size).toBeGreaterThan(7);
+			// All 10 entries should have unique random components
+			expect(uniqueRandomParts.size).toBe(10);
 		});
 	});
 
