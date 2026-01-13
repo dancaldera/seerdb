@@ -714,6 +714,11 @@ describe("persistence utilities", () => {
 	describe("encryption key management", () => {
 		beforeEach(() => {
 			vi.clearAllMocks();
+			// Reset fs mocks to default behaviors for CI stability
+			mockMkdir.mockResolvedValue(undefined);
+			mockWriteFile.mockResolvedValue(undefined);
+			mockAccess.mockResolvedValue(undefined);
+			mockReadFile.mockResolvedValue("");
 		});
 
 		it("loads existing valid encryption key", async () => {
@@ -784,6 +789,11 @@ describe("persistence utilities", () => {
 	describe("password encryption/decryption", () => {
 		beforeEach(() => {
 			vi.clearAllMocks();
+			// Reset fs mocks to default behaviors for CI stability
+			mockMkdir.mockResolvedValue(undefined);
+			mockWriteFile.mockResolvedValue(undefined);
+			mockAccess.mockResolvedValue(undefined);
+			mockReadFile.mockResolvedValue("");
 		});
 
 		it("encrypts and decrypts password correctly", async () => {
