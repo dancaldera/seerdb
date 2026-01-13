@@ -1,30 +1,47 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from "bun:test";
 
+// Create crypto mock constants at module level for CI stability
+const mockCipherUpdate = vi.fn(() => "encrypted");
+const mockCipherFinal = vi.fn(() => "final");
+const mockCipherGetAuthTag = vi.fn(() => Buffer.from("tag123"));
+const mockDecipherSetAuthTag = vi.fn();
+const mockDecipherUpdate = vi.fn(() => "decrypted");
+const mockDecipherFinal = vi.fn(() => "");
+const mockHashUpdate = vi.fn();
+const mockHashDigest = vi.fn(() => "mockedhash123456789012");
+
+const mockCreateCipheriv = vi.fn(() => ({
+	update: mockCipherUpdate,
+	final: mockCipherFinal,
+	getAuthTag: mockCipherGetAuthTag,
+}));
+const mockCreateDecipheriv = vi.fn(() => ({
+	setAuthTag: mockDecipherSetAuthTag,
+	update: mockDecipherUpdate,
+	final: mockDecipherFinal,
+}));
+const mockCreateHash = vi.fn(() => ({
+	update: mockHashUpdate.mockReturnThis(),
+	digest: mockHashDigest,
+}));
+const mockRandomBytes = vi.fn((size: number) => {
+	if (size === 32) {
+		return Buffer.from("0123456789abcdef0123456789abcdef", "hex");
+	}
+	if (size === 16) {
+		return Buffer.from("0123456789abcdef", "hex");
+	}
+	return Buffer.alloc(size);
+});
+const mockScrypt = vi.fn();
+
 // Mock crypto functions
 vi.mock("node:crypto", () => ({
-	createCipheriv: vi.fn(() => ({
-		update: vi.fn(() => "encrypted"),
-		final: vi.fn(() => "final"),
-		getAuthTag: vi.fn(() => Buffer.from("tag123")),
-	})),
-	createDecipheriv: vi.fn(() => ({
-		setAuthTag: vi.fn(),
-		update: vi.fn(() => "decrypted"),
-		final: vi.fn(() => ""),
-	})),
-	createHash: vi.fn(() => ({
-		update: vi.fn().mockReturnThis(),
-		digest: vi.fn().mockReturnValue("mockedhash123456789012"),
-	})),
-	randomBytes: vi.fn((size: number) => {
-		if (size === 32) {
-			return Buffer.from("0123456789abcdef0123456789abcdef", "hex");
-		} else if (size === 16) {
-			return Buffer.from("0123456789abcdef", "hex");
-		}
-		return Buffer.alloc(size);
-	}),
-	scrypt: vi.fn(),
+	createCipheriv: mockCreateCipheriv,
+	createDecipheriv: mockCreateDecipheriv,
+	createHash: mockCreateHash,
+	randomBytes: mockRandomBytes,
+	scrypt: mockScrypt,
 }));
 
 const mockMkdir = vi.fn();
