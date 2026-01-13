@@ -1,6 +1,11 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, vi, type Mock } from "bun:test";
+import { nanoid } from "nanoid";
 import { DBType, ViewState } from "../../src/types/state.js";
 import { createHistoryEntry, historyHelpers } from "../../src/utils/history.js";
+
+vi.mock("nanoid", () => ({
+	nanoid: vi.fn(),
+}));
 
 describe("history utilities", () => {
 	// Set up fake timers for all tests
@@ -10,6 +15,7 @@ describe("history utilities", () => {
 	beforeEach(() => {
 		currentTime = 1672531200000;
 		dateNowSpy.mockImplementation(() => currentTime);
+		(nanoid as unknown as Mock<any>).mockReturnValue("mock-id");
 	});
 	afterAll(() => {
 		dateNowSpy.mockRestore();
@@ -21,7 +27,7 @@ describe("history utilities", () => {
 			const entry = createHistoryEntry(ViewState.Tables, "Test summary");
 
 			expect(entry).toEqual({
-				id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+				id: `history-1672531200000-mock-id`,
 				view: ViewState.Tables,
 				timestamp: expect.any(Number),
 				summary: "Test summary",
@@ -43,7 +49,7 @@ describe("history utilities", () => {
 			);
 
 			expect(entry).toEqual({
-				id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+				id: `history-1672531200000-mock-id`,
 				view: ViewState.DataPreview,
 				timestamp: expect.any(Number),
 				summary: "Preview data",
@@ -52,12 +58,15 @@ describe("history utilities", () => {
 		});
 
 		it("generates unique IDs for each entry", () => {
+			(nanoid as unknown as Mock<any>)
+				.mockReturnValueOnce("id-1")
+				.mockReturnValueOnce("id-2");
 			const entry1 = createHistoryEntry(ViewState.Tables, "Entry 1");
 			const entry2 = createHistoryEntry(ViewState.Tables, "Entry 2");
 
 			expect(entry1.id).not.toBe(entry2.id);
-			expect(entry1.id).toMatch(/^history-\d+-[a-zA-Z0-9_-]{7}$/);
-			expect(entry2.id).toMatch(/^history-\d+-[a-zA-Z0-9_-]{7}$/);
+			expect(entry1.id).toBe("history-1672531200000-id-1");
+			expect(entry2.id).toBe("history-1672531200000-id-2");
 		});
 
 		it("handles different view states", () => {
@@ -114,7 +123,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.dbTypeSelected(DBType.PostgreSQL);
 
 				expect(entry).toEqual({
-					id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+					id: `history-1672531200000-mock-id`,
 					view: ViewState.DBType,
 					timestamp: expect.any(Number),
 					summary: "Selected postgresql",
@@ -141,7 +150,7 @@ describe("history utilities", () => {
 				);
 
 				expect(entry).toEqual({
-					id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+					id: `history-1672531200000-mock-id`,
 					view: ViewState.Connection,
 					timestamp: expect.any(Number),
 					summary: "Connected to Production DB",
@@ -168,7 +177,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.tablesLoaded(25);
 
 				expect(entry).toEqual({
-					id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+					id: `history-1672531200000-mock-id`,
 					view: ViewState.Tables,
 					timestamp: expect.any(Number),
 					summary: "Loaded 25 tables",
@@ -200,7 +209,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.tableSelected("users");
 
 				expect(entry).toEqual({
-					id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+					id: `history-1672531200000-mock-id`,
 					view: ViewState.Tables,
 					timestamp: expect.any(Number),
 					summary: "Selected table: users",
@@ -221,7 +230,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.columnsViewed("users", 12);
 
 				expect(entry).toEqual({
-					id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+					id: `history-1672531200000-mock-id`,
 					view: ViewState.Columns,
 					timestamp: expect.any(Number),
 					summary: "Viewing 12 columns in users",
@@ -247,7 +256,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.dataPreview("products");
 
 				expect(entry).toEqual({
-					id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+					id: `history-1672531200000-mock-id`,
 					view: ViewState.DataPreview,
 					timestamp: expect.any(Number),
 					summary: "Preview data from products",
@@ -269,7 +278,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.queryExecuted(query);
 
 				expect(entry).toEqual({
-					id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+					id: `history-1672531200000-mock-id`,
 					view: ViewState.Query,
 					timestamp: expect.any(Number),
 					summary: "Executed query",
@@ -304,7 +313,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.searchPerformed("john doe");
 
 				expect(entry).toEqual({
-					id: expect.stringMatching(/^history-\d+-[a-zA-Z0-9_-]{7}$/),
+					id: `history-1672531200000-mock-id`,
 					view: ViewState.Search,
 					timestamp: expect.any(Number),
 					summary: "Searched for: john doe",
@@ -341,7 +350,7 @@ describe("history utilities", () => {
 		it("generates IDs with correct format", () => {
 			const entry = createHistoryEntry(ViewState.Tables, "Test");
 
-			expect(entry.id).toMatch(/^history-\d{13}-[a-zA-Z0-9_-]{7}$/);
+			expect(entry.id).toBe(`history-1672531200000-mock-id`);
 		});
 
 		it("includes timestamp in ID", () => {
@@ -355,6 +364,8 @@ describe("history utilities", () => {
 
 		it("generates different random components", () => {
 			// const timestamp = Date.now();
+
+			(nanoid as unknown as Mock<any>).mockImplementation(() => Math.random().toString(36).substring(2, 9));
 
 			const entries = Array.from({ length: 10 }, () =>
 				createHistoryEntry(ViewState.Tables, "Test"),
