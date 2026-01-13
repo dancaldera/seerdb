@@ -3,11 +3,11 @@ import {
 	createDecipheriv,
 	createHash,
 	randomBytes,
-} from "crypto";
-import { constants } from "fs";
-import { access, mkdir, readFile, writeFile } from "fs/promises";
-import os from "os";
-import path from "path";
+} from "node:crypto";
+import { constants } from "node:fs";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { z } from "zod";
 import type {
 	ColumnInfo,

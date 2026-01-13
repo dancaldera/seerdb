@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
-import { constants } from "fs";
-import path from "path";
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { constants } from "node:fs";
+import path from "node:path";
 import type {
 	ColumnInfo,
 	ConnectionInfo,
@@ -19,7 +19,7 @@ import {
 } from "../../src/utils/persistence.js";
 
 // Mock crypto functions
-vi.mock("crypto", () => ({
+vi.mock("node:crypto", () => ({
 	createCipheriv: vi.fn(),
 	createDecipheriv: vi.fn(),
 	createHash: vi.fn(),
@@ -34,24 +34,24 @@ const mockWriteFile = vi.fn();
 const mockAccess = vi.fn();
 const mockHomedir = vi.fn(() => "/home/user");
 
-vi.mock("fs/promises", () => ({
+vi.mock("node:fs/promises", () => ({
 	mkdir: mockMkdir,
 	readFile: mockReadFile,
 	writeFile: mockWriteFile,
 	access: mockAccess,
 }));
 
-vi.mock("os", () => ({
+vi.mock("node:os", () => ({
 	homedir: mockHomedir,
 }));
 
-vi.mock("fs", () => ({
+vi.mock("node:fs", () => ({
 	constants: {
 		F_OK: 0,
 	},
 }));
 
-vi.mock("crypto", () => ({
+vi.mock("node:crypto", () => ({
 	createHash: vi.fn(() => ({
 		update: vi.fn().mockReturnThis(),
 		digest: vi.fn().mockReturnValue("mockedhash123456789012"),
@@ -268,7 +268,7 @@ describe("persistence utilities", () => {
 		});
 
 		it("logs when normalization fallback fails", () => {
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 			const safeParseSpy = vi
 				.spyOn(__persistenceInternals.connectionSchema, "safeParse")
 				.mockImplementationOnce(() => ({ success: false }) as any)
@@ -985,7 +985,7 @@ describe("persistence utilities", () => {
 		});
 
 		it("handles unexpected errors during connection processing", async () => {
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 
 			// Mock the connection schema to succeed
 			const schemaSpy = vi

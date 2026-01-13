@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import type { DBType, ViewHistoryEntry } from "../types/state.js";
 import { ViewState } from "../types/state.js";
 
@@ -5,7 +6,7 @@ import { ViewState } from "../types/state.js";
  * Creates a unique ID for history entries
  */
 function generateHistoryId(): string {
-	return `history-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+	return `history-${Date.now()}-${nanoid(7)}`;
 }
 
 /**
