@@ -8,8 +8,9 @@ import {
 	vi,
 } from "bun:test";
 
+const mockNanoid = vi.fn();
 vi.mock("nanoid", () => ({
-	nanoid: vi.fn(),
+	nanoid: mockNanoid,
 }));
 
 import { nanoid } from "nanoid";
@@ -24,8 +25,8 @@ describe("history utilities", () => {
 	beforeEach(() => {
 		currentTime = 1672531200000;
 		dateNowSpy.mockImplementation(() => currentTime);
-		(nanoid as unknown as Mock<any>).mockReset();
-		(nanoid as unknown as Mock<any>).mockReturnValue("mock-id");
+		mockNanoid.mockReset();
+		mockNanoid.mockReturnValue("mock-id");
 	});
 	afterAll(() => {
 		dateNowSpy.mockRestore();
@@ -68,7 +69,7 @@ describe("history utilities", () => {
 		});
 
 		it("generates unique IDs for each entry", () => {
-			(nanoid as unknown as Mock<any>)
+			mockNanoid
 				.mockReturnValueOnce("id-1")
 				.mockReturnValueOnce("id-2");
 			const entry1 = createHistoryEntry(ViewState.Tables, "Entry 1");
@@ -373,7 +374,7 @@ describe("history utilities", () => {
 		});
 
 		it("generates different random components", () => {
-			(nanoid as unknown as Mock<any>).mockImplementation(() =>
+			mockNanoid.mockImplementation(() =>
 				Math.random().toString(36).substring(2, 9),
 			);
 
