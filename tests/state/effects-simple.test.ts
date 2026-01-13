@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
 import { createDatabaseConnection } from "../../src/database/connection.js";
-import type { DatabaseConfig } from "../../src/database/types.js";
 import { ActionType } from "../../src/state/actions.js";
 import * as effects from "../../src/state/effects.js";
-import type { ColumnInfo, DataRow, TableInfo } from "../../src/types/state.js";
-import { DBType, initialAppState, ViewState } from "../../src/types/state.js";
+import { DBType, initialAppState } from "../../src/types/state.js";
 
 // Mock database connection
 vi.mock("../../src/database/connection.js", () => ({
