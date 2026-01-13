@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
 import { ConnectionError, DatabaseError } from "../../src/database/errors.js";
 import { PostgresConnection } from "../../src/database/postgres.js";
+import { DBType } from "../../src/types/state.js";
 
 // Mock the pg module
 const mockQuery = vi.fn();
@@ -10,7 +11,7 @@ vi.mock("pg", () => ({
 	Pool: class {
 		query = mockQuery;
 		end = mockEnd;
-		constructor(config: any) {}
+		constructor(config: any) { }
 	},
 }));
 
@@ -29,7 +30,7 @@ describe("PostgresConnection", () => {
 	});
 
 	it("creates connection with correct type", () => {
-		expect(connection.type).toBe("postgresql");
+		expect(connection.type).toBe(DBType.PostgreSQL);
 	});
 
 	it("connects successfully", async () => {
@@ -119,35 +120,33 @@ describe("PostgresConnection", () => {
 
 	it("handles close timeout gracefully", async () => {
 		vi.useFakeTimers();
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-		mockEnd.mockReturnValueOnce(new Promise(() => {}));
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+		mockEnd.mockReturnValueOnce(new Promise(() => { })); // Never resolves
+
 		const slowConnection = new PostgresConnection({
 			type: "PostgreSQL" as any,
 			connectionString: "postgres://test",
 			pool: {
-				closeTimeoutMillis: 5,
+				closeTimeoutMillis: 1000,
 			},
 		});
 
-		const originalSetTimeout = global.setTimeout;
-		const originalClearTimeout = global.clearTimeout;
-		(globalThis as any).setTimeout = (fn: () => void) => {
-			fn();
-			return 0;
-		};
-		(globalThis as any).clearTimeout = () => {};
+		const closePromise = slowConnection.close();
 
-		await slowConnection.close();
+		// Fast-forward time to trigger timeout
+		(vi as any).advanceTimersByTime(1100);
+
+		await closePromise;
 
 		expect(warnSpy).toHaveBeenCalled();
 		expect((slowConnection as any).connected).toBe(false);
+
 		warnSpy.mockRestore();
-		(globalThis as any).setTimeout = originalSetTimeout;
-		(globalThis as any).clearTimeout = originalClearTimeout;
+		vi.useRealTimers();
 	});
 
 	it("warns when close rejects immediately", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 		mockEnd.mockRejectedValueOnce(new Error("close failed"));
 
 		await connection.close();
@@ -176,7 +175,7 @@ describe("PostgresConnection", () => {
 		});
 		mockEnd.mockReturnValueOnce(endPromise);
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 
 		// Start close - this should timeout
 		const closePromise = slowConnection.close();
@@ -237,7 +236,7 @@ describe("PostgresConnection", () => {
 			},
 		});
 
-		expect(customConnection.type).toBe("postgresql");
+		expect(customConnection.type).toBe(DBType.PostgreSQL);
 	});
 
 	it("handles non-error exceptions gracefully", async () => {

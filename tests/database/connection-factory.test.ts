@@ -45,8 +45,8 @@ class MockConnection implements DatabaseConnection {
 
 const createMockFactory =
 	(type: DBType) =>
-	(config: DatabaseConfig): DatabaseConnection =>
-		new MockConnection(type, config);
+		(config: DatabaseConfig): DatabaseConnection =>
+			new MockConnection(type, config);
 
 beforeAll(() => {
 	setConnectionFactoryOverrides({
@@ -69,8 +69,8 @@ describe("createDatabaseConnection", () => {
 
 		const connection = createDatabaseConnection(config);
 
-		expect(connection.type).toBe("postgresql");
-		expect(connection.connectionString).toBe("postgres://localhost/test");
+		expect(connection.type).toBe(DBType.PostgreSQL);
+		expect((connection as any).connectionString).toBe("postgres://localhost/test");
 	});
 
 	it("creates MySQL connection", () => {
@@ -81,8 +81,8 @@ describe("createDatabaseConnection", () => {
 
 		const connection = createDatabaseConnection(config);
 
-		expect(connection.type).toBe("mysql");
-		expect(connection.connectionString).toBe("mysql://localhost/test");
+		expect(connection.type).toBe(DBType.MySQL);
+		expect((connection as any).connectionString).toBe("mysql://localhost/test");
 	});
 
 	it("creates SQLite connection", () => {
@@ -93,8 +93,8 @@ describe("createDatabaseConnection", () => {
 
 		const connection = createDatabaseConnection(config);
 
-		expect(connection.type).toBe("sqlite");
-		expect(connection.connectionString).toBe("/path/to/database.sqlite");
+		expect(connection.type).toBe(DBType.SQLite);
+		expect((connection as any).connectionString).toBe("/path/to/database.sqlite");
 	});
 
 	it("creates connections with additional config properties", () => {
@@ -109,7 +109,7 @@ describe("createDatabaseConnection", () => {
 
 		const connection = createDatabaseConnection(config);
 
-		expect(connection.type).toBe("postgresql");
+		expect(connection.type).toBe(DBType.PostgreSQL);
 	});
 
 	it("throws ConnectionError for unsupported database type", () => {
@@ -166,8 +166,8 @@ describe("createDatabaseConnection", () => {
 
 		const connection = createDatabaseConnection(config);
 
-		expect(connection.type).toBe("mysql");
-		expect(connection.connectionString).toBe("mysql://localhost:3306/test");
+		expect(connection.type).toBe(DBType.MySQL);
+		expect((connection as any).connectionString).toBe("mysql://localhost:3306/test");
 	});
 
 	it("handles empty connection string", () => {
@@ -178,8 +178,8 @@ describe("createDatabaseConnection", () => {
 
 		const connection = createDatabaseConnection(config);
 
-		expect(connection.type).toBe("sqlite");
-		expect(connection.connectionString).toBe("");
+		expect(connection.type).toBe(DBType.SQLite);
+		expect((connection as any).connectionString).toBe("");
 	});
 
 	it("handles complex connection strings", () => {
@@ -192,15 +192,15 @@ describe("createDatabaseConnection", () => {
 
 		const connection = createDatabaseConnection(config);
 
-		expect(connection.type).toBe("postgresql");
-		expect(connection.connectionString).toBe(complexConnectionString);
+		expect(connection.type).toBe(DBType.PostgreSQL);
+		expect((connection as any).connectionString).toBe(complexConnectionString);
 	});
 
 	it("works with all valid DB types", () => {
 		const validTypes = [
-			{ type: DBType.PostgreSQL, expected: "postgresql" },
-			{ type: DBType.MySQL, expected: "mysql" },
-			{ type: DBType.SQLite, expected: "sqlite" },
+			{ type: DBType.PostgreSQL, expected: DBType.PostgreSQL },
+			{ type: DBType.MySQL, expected: DBType.MySQL },
+			{ type: DBType.SQLite, expected: DBType.SQLite },
 		];
 
 		validTypes.forEach(({ type, expected }) => {

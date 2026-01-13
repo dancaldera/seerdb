@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { execSync } from "child_process";
+import { existsSync, readFileSync } from "fs";
 import { render } from "ink";
+import { join } from "path";
 import { App } from "./App.js";
 import { runApiMode } from "./api-mode.js";
 import { runHeadlessMode } from "./headless-mode.js";
 import { registerInkInstance } from "./inkControl.js";
 import { parseCliArgs, showHelp } from "./utils/cli-args.js";
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
 
 const main = async () => {
 	// Handle opencode subcommand before parsing other args
@@ -67,12 +67,17 @@ const main = async () => {
 					agentsContent = readFileSync(agentsMdPath, "utf-8");
 				} else {
 					// Fallback: fetch from GitHub
-					console.log("📥 Downloading SeerDB agent documentation from GitHub...");
-					const githubUrl = "https://raw.githubusercontent.com/dancaldera/seerdb/main/AGENTS.md";
+					console.log(
+						"📥 Downloading SeerDB agent documentation from GitHub...",
+					);
+					const githubUrl =
+						"https://raw.githubusercontent.com/dancaldera/seerdb/main/AGENTS.md";
 					const response = await fetch(githubUrl);
 
 					if (!response.ok) {
-						throw new Error(`Failed to fetch AGENTS.md from GitHub: ${response.statusText}`);
+						throw new Error(
+							`Failed to fetch AGENTS.md from GitHub: ${response.statusText}`,
+						);
 					}
 
 					agentsContent = await response.text();
@@ -144,11 +149,14 @@ const main = async () => {
 			} else {
 				// Fallback: fetch from GitHub
 				console.log("📥 Downloading SeerDB agent documentation from GitHub...");
-				const githubUrl = "https://raw.githubusercontent.com/dancaldera/seerdb/main/AGENTS.md";
+				const githubUrl =
+					"https://raw.githubusercontent.com/dancaldera/seerdb/main/AGENTS.md";
 				const response = await fetch(githubUrl);
 
 				if (!response.ok) {
-					throw new Error(`Failed to fetch AGENTS.md from GitHub: ${response.statusText}`);
+					throw new Error(
+						`Failed to fetch AGENTS.md from GitHub: ${response.statusText}`,
+					);
 				}
 
 				agentsContent = await response.text();

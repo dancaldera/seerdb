@@ -3,7 +3,9 @@
 		"target": "ES2022",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"lib": ["ES2022"],
+		"lib": [
+			"ES2022"
+		],
 		"jsx": "react-jsx",
 		"strict": true,
 		"esModuleInterop": true,
@@ -12,13 +14,23 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"outDir": "./dist",
-		"rootDir": "./src",
+		"rootDir": ".",
 		"baseUrl": ".",
-		"types": ["bun-types"],
+		"types": [
+			"bun-types"
+		],
 		"paths": {
-			"@/*": ["src/*"]
+			"@/*": [
+				"src/*"
+			]
 		}
 	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist"]
+	"include": [
+		"src/**/*",
+		"tests/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
+	]
 }

@@ -17,7 +17,7 @@ import {
 } from "../../src/utils/id-generator.js";
 
 // Mock nanoid
-const mockNanoid = vi.fn((length?: number) =>
+const mockNanoid = vi.fn((length?: number): string =>
 	length === 6 ? "short-id" : "long-id",
 );
 vi.mock("nanoid", () => ({

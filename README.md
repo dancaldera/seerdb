@@ -1,5 +1,7 @@
 # SeerDB
 
+[![CI](https://github.com/dancaldera/seerdb/actions/workflows/ci.yml/badge.svg)](https://github.com/dancaldera/seerdb/actions/workflows/ci.yml)
+
 > A modern terminal database explorer for PostgreSQL, MySQL, and SQLite
 
 **Created by [Daniel Caldera](https://github.com/dancaldera)**
@@ -500,6 +502,8 @@ MIT License - see [LICENSE](./LICENSE) file for details
 3. Commit your changes: `git commit -m 'Add amazing feature'`
 4. Push to the branch: `git push origin dan/amazing-feature`
 5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 Please ensure your code passes all checks:
 ```bash

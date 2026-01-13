@@ -239,7 +239,7 @@ describe("Error handling scenarios", () => {
 
 		try {
 			await failingFunction();
-			expect.fail("Should have thrown an error");
+			throw new Error("Should have thrown an error");
 		} catch (error) {
 			expect(error).toBeInstanceOf(ConnectionError);
 			if (error instanceof ConnectionError) {
@@ -320,6 +320,6 @@ describe("Error message edge cases", () => {
 	it("handles numeric codes converted to strings", () => {
 		const error = new ConnectionError("Connection failed", 1234 as any);
 
-		expect(error.code).toBe(1234);
+		expect(Number(error.code)).toBe(1234);
 	});
 });

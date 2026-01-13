@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "bun:test";
+
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "bun:test";
 import { DebouncedWriter } from "../../src/utils/debounced-writer.js";
 
 describe("DebouncedWriter", () => {
 	let writer: DebouncedWriter<string>;
-	let writeFn: vi.MockedFunction<(data: string) => Promise<void>>;
+	let writeFn: Mock<(data: string) => Promise<void>>;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -74,7 +75,7 @@ describe("DebouncedWriter", () => {
 		it("should handle write errors gracefully", async () => {
 			const consoleSpy = vi
 				.spyOn(console, "error")
-				.mockImplementation(() => {});
+				.mockImplementation(() => { });
 			writeFn.mockRejectedValue(new Error("Write failed"));
 
 			(writer as any).pendingData = "test data";

@@ -12,8 +12,8 @@ vi.mock("../../src/utils/persistence.js", () => ({
 		skipped: 0,
 	})),
 	loadQueryHistory: vi.fn(async () => []),
-	saveConnections: vi.fn(async () => {}),
-	saveQueryHistory: vi.fn(async () => {}),
+	saveConnections: vi.fn(async () => { }),
+	saveQueryHistory: vi.fn(async () => { }),
 }));
 
 vi.mock("../../src/utils/export.js", () => ({
@@ -81,6 +81,7 @@ const saveQueryHistoryMock = persistence.saveQueryHistory as Mock<
 	typeof persistence.saveQueryHistory
 >;
 
+type MockDispatch = Mock<(action: any) => void>;
 type Dispatch = (action: any) => void;
 
 describe("effects", () => {
@@ -90,7 +91,7 @@ describe("effects", () => {
 	});
 
 	it("connectToDatabase establishes connection, persists it, and loads tables", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const baseState = {
 			...initialAppState,
 			dbType: DBType.PostgreSQL,
@@ -98,12 +99,12 @@ describe("effects", () => {
 		};
 
 		const connectionStub = {
-			connect: vi.fn(async () => {}),
-			close: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
+			close: vi.fn(async () => { }),
 		};
 
 		const tablesConnectionStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({
 				rows: [
 					{
@@ -114,7 +115,7 @@ describe("effects", () => {
 				],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 
 		createDatabaseConnectionMock
@@ -131,7 +132,7 @@ describe("effects", () => {
 		expect(tablesConnectionStub.query).toHaveBeenCalled();
 		expect(persistence.saveConnections).toHaveBeenCalledTimes(1);
 
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
 				{ type: ActionType.StartLoading },
@@ -144,7 +145,7 @@ describe("effects", () => {
 	});
 
 	it("initializeApp normalizes legacy connections and rewrites file", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const legacyConnection = {
 			id: "abc",
 			name: "Prod",
@@ -166,7 +167,7 @@ describe("effects", () => {
 		expect(persistence.saveConnections).toHaveBeenCalledWith([
 			legacyConnection,
 		]);
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ type: ActionType.SetSavedConnections }),
@@ -181,9 +182,9 @@ describe("effects", () => {
 	});
 
 	it("fetchTables maps sqlite metadata to table info", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const sqliteConnectionStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({
 				rows: [
 					{ table_schema: null, table_name: "people", table_type: "table" },
@@ -191,7 +192,7 @@ describe("effects", () => {
 				],
 				rowCount: 2,
 			})),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 
 		createDatabaseConnectionMock.mockReturnValueOnce(
@@ -204,9 +205,9 @@ describe("effects", () => {
 		});
 
 		expect(sqliteConnectionStub.query).toHaveBeenCalled();
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		const setTablesAction = actions.find(
-			(action) => action.type === ActionType.SetTables,
+			(action: any) => action.type === ActionType.SetTables,
 		);
 		expect(setTablesAction).toBeDefined();
 		expect(setTablesAction.tables).toEqual([
@@ -216,9 +217,9 @@ describe("effects", () => {
 	});
 
 	it("fetchColumns maps postgres columns", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const columnsConnectionStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({
 				rows: [
 					{
@@ -231,7 +232,7 @@ describe("effects", () => {
 				],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 
 		createDatabaseConnectionMock.mockReturnValueOnce(
@@ -265,9 +266,9 @@ describe("effects", () => {
 			},
 		);
 
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		const setColumnsAction = actions.find(
-			(action) => action.type === ActionType.SetColumns,
+			(action: any) => action.type === ActionType.SetColumns,
 		);
 		expect(setColumnsAction).toBeDefined();
 		expect(setColumnsAction.columns[0]).toEqual(
@@ -281,9 +282,9 @@ describe("effects", () => {
 	});
 
 	it("fetchTableData appends rows and tracks pagination state", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const rowsConnectionStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({
 				rows: [
 					{ id: 1, name: "Alice" },
@@ -291,7 +292,7 @@ describe("effects", () => {
 				],
 				rowCount: 2,
 			})),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 
 		createDatabaseConnectionMock.mockReturnValueOnce(rowsConnectionStub as any);
@@ -325,19 +326,18 @@ describe("effects", () => {
 			{
 				offset: 0,
 				limit: 2,
-				append: false,
 			},
 		);
 
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		const setRows = actions.find(
-			(action) => action.type === ActionType.SetDataRows,
+			(action: any) => action.type === ActionType.SetDataRows,
 		);
 		const hasMore = actions.find(
-			(action) => action.type === ActionType.SetHasMoreRows,
+			(action: any) => action.type === ActionType.SetHasMoreRows,
 		);
 		const setOffset = actions.find(
-			(action) => action.type === ActionType.SetCurrentOffset,
+			(action: any) => action.type === ActionType.SetCurrentOffset,
 		);
 		expect(setRows).toBeDefined();
 		expect(setRows.rows).toHaveLength(2);
@@ -346,14 +346,14 @@ describe("effects", () => {
 	});
 
 	it("fetchTableData sets non-zero offset when provided", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const rowsConnectionStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({
 				rows: [{ id: 3 }, { id: 4 }],
 				rowCount: 2,
 			})),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 
 		createDatabaseConnectionMock.mockReturnValueOnce(rowsConnectionStub as any);
@@ -390,9 +390,9 @@ describe("effects", () => {
 			},
 		);
 
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		const setOffset = actions.find(
-			(action) => action.type === ActionType.SetCurrentOffset,
+			(action: any) => action.type === ActionType.SetCurrentOffset,
 		);
 		expect(setOffset).toEqual({
 			type: ActionType.SetCurrentOffset,
@@ -401,14 +401,14 @@ describe("effects", () => {
 	});
 
 	it("throttles repeated table data refreshes", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const connectionStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({
 				rows: [{ id: 1, name: "Alice" }],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 		createDatabaseConnectionMock.mockClear();
@@ -443,14 +443,14 @@ describe("effects", () => {
 		);
 
 		expect(createDatabaseConnection).toHaveBeenCalled();
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		expect(actions).toContainEqual(
 			expect.objectContaining({ type: ActionType.SetDataRows }),
 		);
 	});
 
 	it("removeSavedConnection updates state and persists", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			savedConnections: [
@@ -476,7 +476,7 @@ describe("effects", () => {
 		await removeSavedConnection(dispatch, state, "abc");
 
 		expect(persistence.saveConnections).toHaveBeenCalledWith([]);
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
 				{ type: ActionType.RemoveSavedConnection, connectionId: "abc" },
@@ -484,12 +484,12 @@ describe("effects", () => {
 			]),
 		);
 		expect(
-			actions.some((action) => action.type === ActionType.AddNotification),
+			actions.some((action: any) => action.type === ActionType.AddNotification),
 		).toBe(true);
 	});
 
 	it("updateSavedConnection persists renamed connection", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const connection = {
 			id: "abc",
 			name: "Old Name",
@@ -509,7 +509,7 @@ describe("effects", () => {
 			name: "New Name",
 		});
 
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
@@ -529,7 +529,7 @@ describe("effects", () => {
 	});
 
 	it("updateSavedConnection prevents duplicate names", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			savedConnections: [
@@ -572,7 +572,7 @@ describe("effects", () => {
 	});
 
 	it("updateSavedConnection requires non-empty connection string", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			savedConnections: [
@@ -592,7 +592,7 @@ describe("effects", () => {
 		});
 
 		expect(persistence.saveConnections).not.toHaveBeenCalled();
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ type: ActionType.AddNotification }),
@@ -601,7 +601,7 @@ describe("effects", () => {
 	});
 
 	it("updateSavedConnection refreshes active connection when connection string changes", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const connection = {
 			id: "abc",
 			name: "Prod",
@@ -612,14 +612,14 @@ describe("effects", () => {
 		};
 
 		const connectionStub = {
-			connect: vi.fn(async () => {}),
-			close: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
+			close: vi.fn(async () => { }),
 		};
 
 		const tableStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({ rows: [], rowCount: 0 })),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 
 		createDatabaseConnectionMock
@@ -637,7 +637,7 @@ describe("effects", () => {
 			connectionString: "postgres://new",
 		});
 
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
@@ -661,7 +661,7 @@ describe("effects", () => {
 	});
 
 	it("updateSavedConnection updates database type and reconnects active session", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const connection = {
 			id: "abc",
 			name: "Prod",
@@ -672,14 +672,14 @@ describe("effects", () => {
 		};
 
 		const connectionStub = {
-			connect: vi.fn(async () => {}),
-			close: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
+			close: vi.fn(async () => { }),
 		};
 
 		const tableStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({ rows: [], rowCount: 0 })),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 
 		createDatabaseConnectionMock
@@ -697,7 +697,7 @@ describe("effects", () => {
 			type: DBType.MySQL,
 		});
 
-		const actions = dispatch.mock.calls.map((call) => call[0]);
+		const actions = dispatch.mock.calls.map((call: any[]) => call[0]);
 		expect(actions).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
@@ -716,7 +716,7 @@ describe("effects", () => {
 	});
 
 	it("initializeApp notifies about skipped connections", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		loadConnectionsMock.mockResolvedValueOnce({
 			connections: [],
 			normalized: 0,
@@ -739,7 +739,7 @@ describe("effects", () => {
 	});
 
 	it("initializeApp reports initialization errors", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		loadConnectionsMock.mockRejectedValueOnce(new Error("boom"));
 		loadQueryHistoryMock.mockResolvedValueOnce([]);
 
@@ -754,7 +754,7 @@ describe("effects", () => {
 	});
 
 	it("connectToDatabase surfaces database connection errors", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			savedConnections: [],
@@ -763,7 +763,7 @@ describe("effects", () => {
 			connect: vi.fn(async () => {
 				throw new ConnectionError("unreachable");
 			}),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -781,7 +781,7 @@ describe("effects", () => {
 	});
 
 	it("connectToDatabase handles generic connection errors", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			savedConnections: [],
@@ -790,7 +790,7 @@ describe("effects", () => {
 			connect: vi.fn(async () => {
 				throw new Error("Generic connection error");
 			}),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -811,13 +811,13 @@ describe("effects", () => {
 	});
 
 	it("fetchTables dispatches error when query fails", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const failingConnection = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => {
 				throw new Error("tables failed");
 			}),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(failingConnection as any);
 
@@ -836,9 +836,9 @@ describe("effects", () => {
 	});
 
 	it("fetchColumns throttles rapid refresh attempts", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const connectionStub = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({
 				rows: [
 					{
@@ -851,7 +851,7 @@ describe("effects", () => {
 				],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 		const nowSpy = vi.spyOn(Date, "now").mockReturnValue(5_000);
@@ -885,13 +885,13 @@ describe("effects", () => {
 	});
 
 	it("fetchColumns dispatches error on failure", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const failingConnection = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => {
 				throw new Error("columns failed");
 			}),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(failingConnection as any);
 
@@ -924,13 +924,13 @@ describe("effects", () => {
 	});
 
 	it("fetchTableData dispatches error on failure", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const failingConnection = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => {
 				throw new Error("rows failed");
 			}),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(failingConnection as any);
 
@@ -964,7 +964,7 @@ describe("effects", () => {
 	});
 
 	it("searchTableRows requires column metadata", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = { ...initialAppState };
 
 		await effects.searchTableRows(
@@ -986,7 +986,7 @@ describe("effects", () => {
 	});
 
 	it("removeSavedConnection returns when nothing matches", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			savedConnections: [
@@ -1007,7 +1007,7 @@ describe("effects", () => {
 	});
 
 	it("updateSavedConnection returns when connection is missing", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = { ...initialAppState };
 
 		await updateSavedConnection(dispatch, state, "missing", { name: "New" });
@@ -1016,7 +1016,7 @@ describe("effects", () => {
 	});
 
 	it("updateSavedConnection rejects empty names", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			savedConnections: [
@@ -1045,7 +1045,7 @@ describe("effects", () => {
 	});
 
 	it("updateSavedConnection rejects unsupported database types", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			savedConnections: [
@@ -1076,7 +1076,7 @@ describe("effects", () => {
 	});
 
 	it("updateSavedConnection reports when nothing changed", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const connection = {
 			id: "abc",
 			name: "Prod",
@@ -1104,9 +1104,9 @@ describe("effects", () => {
 	});
 
 	it("fetchColumns maps mysql metadata", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const mysqlConnection = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async () => ({
 				rows: [
 					{
@@ -1119,7 +1119,7 @@ describe("effects", () => {
 				],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(mysqlConnection as any);
 
@@ -1158,15 +1158,15 @@ describe("effects", () => {
 	});
 
 	it("fetchTableData uses mysql pagination syntax", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		let capturedSql = "";
 		const mysqlConnection = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: vi.fn(async (sql: string) => {
 				capturedSql = sql;
 				return { rows: [], rowCount: 0 };
 			}),
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(mysqlConnection as any);
 
@@ -1195,15 +1195,15 @@ describe("effects", () => {
 	});
 
 	it("searchTableRows parses string counts", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const queryMock = vi
 			.fn()
 			.mockResolvedValueOnce({ rows: [{ total_count: "5" }], rowCount: 1 })
 			.mockResolvedValueOnce({ rows: [{ id: 1 }], rowCount: 1 });
 		const connection = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: queryMock,
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connection as any);
 
@@ -1233,7 +1233,7 @@ describe("effects", () => {
 	});
 
 	it("searchTableRows uses mysql search syntax", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		let capturedCountSql = "";
 		let capturedDataSql = "";
 		const queryMock = vi.fn().mockImplementation(async (sql: string) => {
@@ -1246,9 +1246,9 @@ describe("effects", () => {
 			}
 		});
 		const connection = {
-			connect: vi.fn(async () => {}),
+			connect: vi.fn(async () => { }),
 			query: queryMock,
-			close: vi.fn(async () => {}),
+			close: vi.fn(async () => { }),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connection as any);
 
@@ -1277,7 +1277,7 @@ describe("effects", () => {
 	});
 
 	it("exportTableData exports data successfully", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			dataRows: [{ id: 1, name: "Test" }],
@@ -1319,7 +1319,7 @@ describe("effects", () => {
 	});
 
 	it("exportTableData handles export errors", async () => {
-		const dispatch = vi.fn() as Dispatch;
+		const dispatch = vi.fn() as MockDispatch;
 		const state = {
 			...initialAppState,
 			dataRows: [{ id: 1, name: "Test" }],
@@ -1503,13 +1503,13 @@ describe("effects", () => {
 		});
 
 		it("updates column value and dispatches state changes", async () => {
-			const dispatch = vi.fn() as Dispatch;
+			const dispatch = vi.fn() as MockDispatch;
 			const state = buildState();
 			const row = state.dataRows[0];
 			const connectionStub = {
-				connect: vi.fn(async () => {}),
-				execute: vi.fn(async () => {}),
-				close: vi.fn(async () => {}),
+				connect: vi.fn(async () => { }),
+				execute: vi.fn(async () => { }),
+				close: vi.fn(async () => { }),
 			};
 			createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -1544,13 +1544,13 @@ describe("effects", () => {
 		});
 
 		it("interprets NULL input as SQL null", async () => {
-			const dispatch = vi.fn() as Dispatch;
+			const dispatch = vi.fn() as MockDispatch;
 			const state = buildState();
 			const row = state.dataRows[0];
 			const connectionStub = {
-				connect: vi.fn(async () => {}),
-				execute: vi.fn(async () => {}),
-				close: vi.fn(async () => {}),
+				connect: vi.fn(async () => { }),
+				execute: vi.fn(async () => { }),
+				close: vi.fn(async () => { }),
 			};
 			createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -1628,11 +1628,11 @@ describe("effects", () => {
 			const state = buildState();
 			const row = state.dataRows[0];
 			const connectionStub = {
-				connect: vi.fn(async () => {}),
+				connect: vi.fn(async () => { }),
 				execute: vi.fn(async () => {
 					throw new Error("boom");
 				}),
-				close: vi.fn(async () => {}),
+				close: vi.fn(async () => { }),
 			};
 			createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -1708,9 +1708,9 @@ describe("effects", () => {
 			const state = buildState();
 			const row = { id: undefined, name: "Alice" } as any;
 			const connectionStub = {
-				connect: vi.fn(async () => {}),
-				execute: vi.fn(async () => {}),
-				close: vi.fn(async () => {}),
+				connect: vi.fn(async () => { }),
+				execute: vi.fn(async () => { }),
+				close: vi.fn(async () => { }),
 			};
 			createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 

@@ -128,7 +128,7 @@ describe("history utilities", () => {
 				dbTypes.forEach((dbType) => {
 					const entry = historyHelpers.dbTypeSelected(dbType);
 					expect(entry.summary).toBe(`Selected ${dbType}`);
-					expect(entry.data.dbType).toBe(dbType);
+					expect(entry.data!.dbType).toBe(dbType);
 				});
 			});
 		});
@@ -159,7 +159,7 @@ describe("history utilities", () => {
 				);
 
 				expect(entry.summary).toBe("Connected to Test-DB_123");
-				expect(entry.data.connectionName).toBe("Test-DB_123");
+				expect(entry.data!.connectionName).toBe("Test-DB_123");
 			});
 		});
 
@@ -212,7 +212,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.tableSelected("public.users");
 
 				expect(entry.summary).toBe("Selected table: public.users");
-				expect(entry.data.tableName).toBe("public.users");
+				expect(entry.data!.tableName).toBe("public.users");
 			});
 		});
 
@@ -259,7 +259,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.dataPreview("schema.table_name");
 
 				expect(entry.summary).toBe("Preview data from schema.table_name");
-				expect(entry.data.tableName).toBe("schema.table_name");
+				expect(entry.data!.tableName).toBe("schema.table_name");
 			});
 		});
 
@@ -289,13 +289,13 @@ describe("history utilities", () => {
 				`;
 				const entry = historyHelpers.queryExecuted(complexQuery.trim());
 
-				expect(entry.data.query).toBe(complexQuery.trim());
+				expect(entry.data!.query).toBe(complexQuery.trim());
 			});
 
 			it("handles empty query", () => {
 				const entry = historyHelpers.queryExecuted("");
 
-				expect(entry.data.query).toBe("");
+				expect(entry.data!.query).toBe("");
 			});
 		});
 
@@ -317,14 +317,14 @@ describe("history utilities", () => {
 				const entry = historyHelpers.searchPerformed(searchTerm);
 
 				expect(entry.summary).toBe("Searched for: user@example.com");
-				expect(entry.data.query).toBe(searchTerm);
+				expect(entry.data!.query).toBe(searchTerm);
 			});
 
 			it("handles empty search term", () => {
 				const entry = historyHelpers.searchPerformed("");
 
 				expect(entry.summary).toBe("Searched for: ");
-				expect(entry.data.query).toBe("");
+				expect(entry.data!.query).toBe("");
 			});
 
 			it("handles long search terms", () => {
@@ -332,7 +332,7 @@ describe("history utilities", () => {
 				const entry = historyHelpers.searchPerformed(longTerm);
 
 				expect(entry.summary).toBe(`Searched for: ${longTerm}`);
-				expect(entry.data.query).toBe(longTerm);
+				expect(entry.data!.query).toBe(longTerm);
 			});
 		});
 	});

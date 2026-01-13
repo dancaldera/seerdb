@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "bun:test";
 import { ConnectionError, DatabaseError } from "../../src/database/errors.js";
 import { MySQLConnection } from "../../src/database/mysql.js";
+import { DBType } from "../../src/types/state.js";
 
 // Mock the mysql2/promise module
 const mockMysqlQuery = vi.fn();
@@ -34,7 +35,7 @@ describe("MySQLConnection", () => {
 	});
 
 	it("creates connection with correct type", () => {
-		expect(connection.type).toBe("mysql");
+		expect(connection.type).toBe(DBType.MySQL);
 	});
 
 	it("connects successfully", async () => {
@@ -105,8 +106,8 @@ describe("MySQLConnection", () => {
 
 	it("executes SQL successfully", async () => {
 		(connection as any).connected = true;
-		const mockRows = [];
-		const mockFields = [];
+		const mockRows: any[] = [];
+		const mockFields: any[] = [];
 		mockMysqlQuery.mockResolvedValue([mockRows, mockFields]);
 
 		await connection.execute("DELETE FROM users WHERE id = ?", [1]);
@@ -144,7 +145,7 @@ describe("MySQLConnection", () => {
 		});
 		mockMysqlEnd.mockReturnValueOnce(endPromise);
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 
 		// Start close - this should timeout
 		const closePromise = slowConnection.close();
@@ -181,7 +182,7 @@ describe("MySQLConnection", () => {
 		});
 		mockMysqlEnd.mockReturnValueOnce(endPromise);
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 
 		// Start close - this should timeout
 		const closePromise = slowConnection.close();
@@ -207,7 +208,7 @@ describe("MySQLConnection", () => {
 	});
 
 	it("warns when close rejects immediately", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 		mockMysqlEnd.mockRejectedValueOnce(new Error("close failed"));
 
 		await connection.close();
@@ -261,7 +262,7 @@ describe("MySQLConnection", () => {
 			},
 		});
 
-		expect(customConnection.type).toBe("mysql");
+		expect(customConnection.type).toBe(DBType.MySQL);
 	});
 
 	it("handles non-error exceptions gracefully", async () => {

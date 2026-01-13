@@ -17,7 +17,7 @@ vi.mock("bun:sqlite", () => ({
 		exec = mockSqliteExec;
 		query = mockSqliteQuery;
 		close = mockSqliteClose;
-		constructor(path: string, options?: any) {}
+		constructor(path: string, options?: any) { }
 	},
 }));
 
@@ -40,7 +40,7 @@ describe("SQLiteConnection", () => {
 	});
 
 	it("creates connection with correct type", () => {
-		expect(connection.type).toBe("sqlite");
+		expect(connection.type).toBe(DBType.SQLite);
 	});
 
 	it("connects successfully", async () => {
