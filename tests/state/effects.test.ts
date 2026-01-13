@@ -12,8 +12,8 @@ vi.mock("../../src/utils/persistence.js", () => ({
 		skipped: 0,
 	})),
 	loadQueryHistory: vi.fn(async () => []),
-	saveConnections: vi.fn(async () => { }),
-	saveQueryHistory: vi.fn(async () => { }),
+	saveConnections: vi.fn(async () => {}),
+	saveQueryHistory: vi.fn(async () => {}),
 }));
 
 vi.mock("../../src/utils/export.js", () => ({
@@ -99,12 +99,12 @@ describe("effects", () => {
 		};
 
 		const connectionStub = {
-			connect: vi.fn(async () => { }),
-			close: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
+			close: vi.fn(async () => {}),
 		};
 
 		const tablesConnectionStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({
 				rows: [
 					{
@@ -115,7 +115,7 @@ describe("effects", () => {
 				],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 
 		createDatabaseConnectionMock
@@ -184,7 +184,7 @@ describe("effects", () => {
 	it("fetchTables maps sqlite metadata to table info", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const sqliteConnectionStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({
 				rows: [
 					{ table_schema: null, table_name: "people", table_type: "table" },
@@ -192,7 +192,7 @@ describe("effects", () => {
 				],
 				rowCount: 2,
 			})),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 
 		createDatabaseConnectionMock.mockReturnValueOnce(
@@ -219,7 +219,7 @@ describe("effects", () => {
 	it("fetchColumns maps postgres columns", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const columnsConnectionStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({
 				rows: [
 					{
@@ -232,7 +232,7 @@ describe("effects", () => {
 				],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 
 		createDatabaseConnectionMock.mockReturnValueOnce(
@@ -284,7 +284,7 @@ describe("effects", () => {
 	it("fetchTableData appends rows and tracks pagination state", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const rowsConnectionStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({
 				rows: [
 					{ id: 1, name: "Alice" },
@@ -292,7 +292,7 @@ describe("effects", () => {
 				],
 				rowCount: 2,
 			})),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 
 		createDatabaseConnectionMock.mockReturnValueOnce(rowsConnectionStub as any);
@@ -348,12 +348,12 @@ describe("effects", () => {
 	it("fetchTableData sets non-zero offset when provided", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const rowsConnectionStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({
 				rows: [{ id: 3 }, { id: 4 }],
 				rowCount: 2,
 			})),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 
 		createDatabaseConnectionMock.mockReturnValueOnce(rowsConnectionStub as any);
@@ -403,12 +403,12 @@ describe("effects", () => {
 	it("throttles repeated table data refreshes", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const connectionStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({
 				rows: [{ id: 1, name: "Alice" }],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 		createDatabaseConnectionMock.mockClear();
@@ -612,14 +612,14 @@ describe("effects", () => {
 		};
 
 		const connectionStub = {
-			connect: vi.fn(async () => { }),
-			close: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
+			close: vi.fn(async () => {}),
 		};
 
 		const tableStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({ rows: [], rowCount: 0 })),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 
 		createDatabaseConnectionMock
@@ -672,14 +672,14 @@ describe("effects", () => {
 		};
 
 		const connectionStub = {
-			connect: vi.fn(async () => { }),
-			close: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
+			close: vi.fn(async () => {}),
 		};
 
 		const tableStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({ rows: [], rowCount: 0 })),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 
 		createDatabaseConnectionMock
@@ -763,7 +763,7 @@ describe("effects", () => {
 			connect: vi.fn(async () => {
 				throw new ConnectionError("unreachable");
 			}),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -790,7 +790,7 @@ describe("effects", () => {
 			connect: vi.fn(async () => {
 				throw new Error("Generic connection error");
 			}),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -813,11 +813,11 @@ describe("effects", () => {
 	it("fetchTables dispatches error when query fails", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const failingConnection = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => {
 				throw new Error("tables failed");
 			}),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(failingConnection as any);
 
@@ -838,7 +838,7 @@ describe("effects", () => {
 	it("fetchColumns throttles rapid refresh attempts", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const connectionStub = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({
 				rows: [
 					{
@@ -851,7 +851,7 @@ describe("effects", () => {
 				],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 		const nowSpy = vi.spyOn(Date, "now").mockReturnValue(5_000);
@@ -887,11 +887,11 @@ describe("effects", () => {
 	it("fetchColumns dispatches error on failure", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const failingConnection = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => {
 				throw new Error("columns failed");
 			}),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(failingConnection as any);
 
@@ -926,11 +926,11 @@ describe("effects", () => {
 	it("fetchTableData dispatches error on failure", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const failingConnection = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => {
 				throw new Error("rows failed");
 			}),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(failingConnection as any);
 
@@ -1106,7 +1106,7 @@ describe("effects", () => {
 	it("fetchColumns maps mysql metadata", async () => {
 		const dispatch = vi.fn() as MockDispatch;
 		const mysqlConnection = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async () => ({
 				rows: [
 					{
@@ -1119,7 +1119,7 @@ describe("effects", () => {
 				],
 				rowCount: 1,
 			})),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(mysqlConnection as any);
 
@@ -1161,12 +1161,12 @@ describe("effects", () => {
 		const dispatch = vi.fn() as MockDispatch;
 		let capturedSql = "";
 		const mysqlConnection = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: vi.fn(async (sql: string) => {
 				capturedSql = sql;
 				return { rows: [], rowCount: 0 };
 			}),
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(mysqlConnection as any);
 
@@ -1201,9 +1201,9 @@ describe("effects", () => {
 			.mockResolvedValueOnce({ rows: [{ total_count: "5" }], rowCount: 1 })
 			.mockResolvedValueOnce({ rows: [{ id: 1 }], rowCount: 1 });
 		const connection = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: queryMock,
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connection as any);
 
@@ -1246,9 +1246,9 @@ describe("effects", () => {
 			}
 		});
 		const connection = {
-			connect: vi.fn(async () => { }),
+			connect: vi.fn(async () => {}),
 			query: queryMock,
-			close: vi.fn(async () => { }),
+			close: vi.fn(async () => {}),
 		};
 		createDatabaseConnectionMock.mockReturnValueOnce(connection as any);
 
@@ -1507,9 +1507,9 @@ describe("effects", () => {
 			const state = buildState();
 			const row = state.dataRows[0];
 			const connectionStub = {
-				connect: vi.fn(async () => { }),
-				execute: vi.fn(async () => { }),
-				close: vi.fn(async () => { }),
+				connect: vi.fn(async () => {}),
+				execute: vi.fn(async () => {}),
+				close: vi.fn(async () => {}),
 			};
 			createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -1548,9 +1548,9 @@ describe("effects", () => {
 			const state = buildState();
 			const row = state.dataRows[0];
 			const connectionStub = {
-				connect: vi.fn(async () => { }),
-				execute: vi.fn(async () => { }),
-				close: vi.fn(async () => { }),
+				connect: vi.fn(async () => {}),
+				execute: vi.fn(async () => {}),
+				close: vi.fn(async () => {}),
 			};
 			createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -1628,11 +1628,11 @@ describe("effects", () => {
 			const state = buildState();
 			const row = state.dataRows[0];
 			const connectionStub = {
-				connect: vi.fn(async () => { }),
+				connect: vi.fn(async () => {}),
 				execute: vi.fn(async () => {
 					throw new Error("boom");
 				}),
-				close: vi.fn(async () => { }),
+				close: vi.fn(async () => {}),
 			};
 			createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 
@@ -1708,9 +1708,9 @@ describe("effects", () => {
 			const state = buildState();
 			const row = { id: undefined, name: "Alice" } as any;
 			const connectionStub = {
-				connect: vi.fn(async () => { }),
-				execute: vi.fn(async () => { }),
-				close: vi.fn(async () => { }),
+				connect: vi.fn(async () => {}),
+				execute: vi.fn(async () => {}),
+				close: vi.fn(async () => {}),
 			};
 			createDatabaseConnectionMock.mockReturnValueOnce(connectionStub as any);
 

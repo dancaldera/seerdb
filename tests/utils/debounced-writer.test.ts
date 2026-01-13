@@ -1,5 +1,12 @@
-
-import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "bun:test";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type Mock,
+	vi,
+} from "bun:test";
 import { DebouncedWriter } from "../../src/utils/debounced-writer.js";
 
 describe("DebouncedWriter", () => {
@@ -75,7 +82,7 @@ describe("DebouncedWriter", () => {
 		it("should handle write errors gracefully", async () => {
 			const consoleSpy = vi
 				.spyOn(console, "error")
-				.mockImplementation(() => { });
+				.mockImplementation(() => {});
 			writeFn.mockRejectedValue(new Error("Write failed"));
 
 			(writer as any).pendingData = "test data";

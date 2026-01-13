@@ -45,8 +45,8 @@ class MockConnection implements DatabaseConnection {
 
 const createMockFactory =
 	(type: DBType) =>
-		(config: DatabaseConfig): DatabaseConnection =>
-			new MockConnection(type, config);
+	(config: DatabaseConfig): DatabaseConnection =>
+		new MockConnection(type, config);
 
 beforeAll(() => {
 	setConnectionFactoryOverrides({
@@ -70,7 +70,9 @@ describe("createDatabaseConnection", () => {
 		const connection = createDatabaseConnection(config);
 
 		expect(connection.type).toBe(DBType.PostgreSQL);
-		expect((connection as any).connectionString).toBe("postgres://localhost/test");
+		expect((connection as any).connectionString).toBe(
+			"postgres://localhost/test",
+		);
 	});
 
 	it("creates MySQL connection", () => {
@@ -94,7 +96,9 @@ describe("createDatabaseConnection", () => {
 		const connection = createDatabaseConnection(config);
 
 		expect(connection.type).toBe(DBType.SQLite);
-		expect((connection as any).connectionString).toBe("/path/to/database.sqlite");
+		expect((connection as any).connectionString).toBe(
+			"/path/to/database.sqlite",
+		);
 	});
 
 	it("creates connections with additional config properties", () => {
@@ -167,7 +171,9 @@ describe("createDatabaseConnection", () => {
 		const connection = createDatabaseConnection(config);
 
 		expect(connection.type).toBe(DBType.MySQL);
-		expect((connection as any).connectionString).toBe("mysql://localhost:3306/test");
+		expect((connection as any).connectionString).toBe(
+			"mysql://localhost:3306/test",
+		);
 	});
 
 	it("handles empty connection string", () => {

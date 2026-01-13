@@ -17,7 +17,7 @@ vi.mock("bun:sqlite", () => ({
 		exec = mockSqliteExec;
 		query = mockSqliteQuery;
 		close = mockSqliteClose;
-		constructor(path: string, options?: any) { }
+		constructor(path: string, options?: any) {}
 	},
 }));
 

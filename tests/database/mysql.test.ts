@@ -145,7 +145,7 @@ describe("MySQLConnection", () => {
 		});
 		mockMysqlEnd.mockReturnValueOnce(endPromise);
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		// Start close - this should timeout
 		const closePromise = slowConnection.close();
@@ -182,7 +182,7 @@ describe("MySQLConnection", () => {
 		});
 		mockMysqlEnd.mockReturnValueOnce(endPromise);
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		// Start close - this should timeout
 		const closePromise = slowConnection.close();
@@ -208,7 +208,7 @@ describe("MySQLConnection", () => {
 	});
 
 	it("warns when close rejects immediately", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		mockMysqlEnd.mockRejectedValueOnce(new Error("close failed"));
 
 		await connection.close();

@@ -1,4 +1,12 @@
-import { afterAll, beforeEach, describe, expect, it, vi, type Mock } from "bun:test";
+import {
+	afterAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type Mock,
+	vi,
+} from "bun:test";
 
 vi.mock("nanoid", () => ({
 	nanoid: vi.fn(),
@@ -366,7 +374,9 @@ describe("history utilities", () => {
 		it("generates different random components", () => {
 			// const timestamp = Date.now();
 
-			(nanoid as unknown as Mock<any>).mockImplementation(() => Math.random().toString(36).substring(2, 9));
+			(nanoid as unknown as Mock<any>).mockImplementation(() =>
+				Math.random().toString(36).substring(2, 9),
+			);
 
 			const entries = Array.from({ length: 10 }, () =>
 				createHistoryEntry(ViewState.Tables, "Test"),

@@ -11,7 +11,7 @@ vi.mock("pg", () => ({
 	Pool: class {
 		query = mockQuery;
 		end = mockEnd;
-		constructor(config: any) { }
+		constructor(config: any) {}
 	},
 }));
 
@@ -120,8 +120,8 @@ describe("PostgresConnection", () => {
 
 	it("handles close timeout gracefully", async () => {
 		vi.useFakeTimers();
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
-		mockEnd.mockReturnValueOnce(new Promise(() => { })); // Never resolves
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		mockEnd.mockReturnValueOnce(new Promise(() => {})); // Never resolves
 
 		const slowConnection = new PostgresConnection({
 			type: "PostgreSQL" as any,
@@ -146,7 +146,7 @@ describe("PostgresConnection", () => {
 	});
 
 	it("warns when close rejects immediately", async () => {
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 		mockEnd.mockRejectedValueOnce(new Error("close failed"));
 
 		await connection.close();
@@ -175,7 +175,7 @@ describe("PostgresConnection", () => {
 		});
 		mockEnd.mockReturnValueOnce(endPromise);
 
-		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
 		// Start close - this should timeout
 		const closePromise = slowConnection.close();
