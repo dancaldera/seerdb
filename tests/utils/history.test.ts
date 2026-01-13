@@ -24,6 +24,7 @@ describe("history utilities", () => {
 	beforeEach(() => {
 		currentTime = 1672531200000;
 		dateNowSpy.mockImplementation(() => currentTime);
+		(nanoid as unknown as Mock<any>).mockReset();
 		(nanoid as unknown as Mock<any>).mockReturnValue("mock-id");
 	});
 	afterAll(() => {
@@ -372,8 +373,6 @@ describe("history utilities", () => {
 		});
 
 		it("generates different random components", () => {
-			// const timestamp = Date.now();
-
 			(nanoid as unknown as Mock<any>).mockImplementation(() =>
 				Math.random().toString(36).substring(2, 9),
 			);
