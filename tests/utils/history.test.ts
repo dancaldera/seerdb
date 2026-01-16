@@ -69,9 +69,7 @@ describe("history utilities", () => {
 		});
 
 		it("generates unique IDs for each entry", () => {
-			mockNanoid
-				.mockReturnValueOnce("id-1")
-				.mockReturnValueOnce("id-2");
+			mockNanoid.mockReturnValueOnce("id-1").mockReturnValueOnce("id-2");
 			const entry1 = createHistoryEntry(ViewState.Tables, "Entry 1");
 			const entry2 = createHistoryEntry(ViewState.Tables, "Entry 2");
 

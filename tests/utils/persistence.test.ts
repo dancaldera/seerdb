@@ -109,9 +109,7 @@ describe("persistence utilities", () => {
 
 	describe("loadConnections", () => {
 		it("returns empty result when file doesn't exist", async () => {
-			mockAccess.mockRejectedValue(
-				new Error("File not found"),
-			);
+			mockAccess.mockRejectedValue(new Error("File not found"));
 
 			const result = await loadConnections();
 
@@ -145,9 +143,7 @@ describe("persistence utilities", () => {
 					updatedAt: "2023-01-01T00:00:00.000Z",
 				},
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(mockConnections),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(mockConnections));
 
 			const result = await loadConnections();
 
@@ -163,9 +159,7 @@ describe("persistence utilities", () => {
 		});
 
 		it("handles non-array data", async () => {
-			mockReadFile.mockResolvedValue(
-				'{"not": "an array"}',
-			);
+			mockReadFile.mockResolvedValue('{"not": "an array"}');
 
 			const result = await loadConnections();
 
@@ -182,9 +176,7 @@ describe("persistence utilities", () => {
 					connection_str: "postgres://localhost/legacy",
 				},
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(legacyData),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(legacyData));
 
 			const result = await loadConnections();
 
@@ -208,9 +200,7 @@ describe("persistence utilities", () => {
 				{ invalid: "entry" },
 				null,
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(mixedData),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(mixedData));
 
 			const result = await loadConnections();
 
@@ -227,9 +217,7 @@ describe("persistence utilities", () => {
 				{ driver: "sqlite", connection_str: "/path/to/db1.sqlite" },
 				{ driver: "sqlite3", connection_str: "/path/to/db2.sqlite" },
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(legacyData),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(legacyData));
 
 			const result = await loadConnections();
 
@@ -246,9 +234,7 @@ describe("persistence utilities", () => {
 			const legacyData = [
 				{ driver: "oracle", connection_str: "oracle://localhost/db" },
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(legacyData),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(legacyData));
 
 			const result = await loadConnections();
 
@@ -275,9 +261,7 @@ describe("persistence utilities", () => {
 					updatedAt: "2023-01-02T00:00:00.000Z",
 				},
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(duplicateData),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(duplicateData));
 
 			const result = await loadConnections();
 
@@ -303,7 +287,7 @@ describe("persistence utilities", () => {
 		});
 
 		it("logs when normalization fallback fails", () => {
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 			const safeParseSpy = vi
 				.spyOn(__persistenceInternals.connectionSchema, "safeParse")
 				.mockImplementationOnce(() => ({ success: false }) as any)
@@ -343,9 +327,7 @@ describe("persistence utilities", () => {
 		});
 
 		it("creates directory if it doesn't exist", async () => {
-			mockAccess.mockRejectedValue(
-				new Error("File not found"),
-			);
+			mockAccess.mockRejectedValue(new Error("File not found"));
 
 			await loadConnections();
 
@@ -423,9 +405,7 @@ describe("persistence utilities", () => {
 
 	describe("loadQueryHistory", () => {
 		it("returns empty array when file doesn't exist", async () => {
-			mockAccess.mockRejectedValue(
-				new Error("File not found"),
-			);
+			mockAccess.mockRejectedValue(new Error("File not found"));
 
 			const result = await loadQueryHistory();
 
@@ -451,9 +431,7 @@ describe("persistence utilities", () => {
 					rowCount: 10,
 				},
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(mockHistory),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(mockHistory));
 
 			const result = await loadQueryHistory();
 
@@ -472,9 +450,7 @@ describe("persistence utilities", () => {
 					error: "Syntax error",
 				},
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(mockHistory),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(mockHistory));
 
 			const result = await loadQueryHistory();
 
@@ -493,9 +469,7 @@ describe("persistence utilities", () => {
 				},
 				{ invalid: "entry" },
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(mixedData),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(mixedData));
 
 			const result = await loadQueryHistory();
 
@@ -503,9 +477,7 @@ describe("persistence utilities", () => {
 		});
 
 		it("handles non-array data", async () => {
-			mockReadFile.mockResolvedValue(
-				'{"not": "an array"}',
-			);
+			mockReadFile.mockResolvedValue('{"not": "an array"}');
 
 			const result = await loadQueryHistory();
 
@@ -593,9 +565,7 @@ describe("persistence utilities", () => {
 			];
 
 			await saveConnections(originalConnections, true);
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(originalConnections),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(originalConnections));
 
 			const result = await loadConnections();
 
@@ -620,9 +590,7 @@ describe("persistence utilities", () => {
 				updatedAt: "2023-01-01T00:00:00.000Z",
 			};
 
-			mockReadFile.mockResolvedValue(
-				JSON.stringify([corruptedConnection]),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify([corruptedConnection]));
 
 			const result = await loadConnections();
 
@@ -642,9 +610,7 @@ describe("persistence utilities", () => {
 				updatedAt: "2023-01-01T00:00:00.000Z",
 			};
 
-			mockReadFile.mockResolvedValue(
-				JSON.stringify([malformedConnection]),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify([malformedConnection]));
 
 			const result = await loadConnections();
 
@@ -665,9 +631,7 @@ describe("persistence utilities", () => {
 				{ driver: "mysql", connection_str: "mysql://localhost/legacy" }, // Legacy
 				{ invalid: "entry" }, // Invalid
 			];
-			mockReadFile.mockResolvedValue(
-				JSON.stringify(mixedConnections),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify(mixedConnections));
 
 			const result = await loadConnections();
 
@@ -770,9 +734,7 @@ describe("persistence utilities", () => {
 
 		it("handles read errors gracefully and generates new key", async () => {
 			mockAccess.mockResolvedValue(undefined); // File exists
-			mockReadFile.mockRejectedValue(
-				new Error("Read failed"),
-			);
+			mockReadFile.mockRejectedValue(new Error("Read failed"));
 
 			const result = await __persistenceInternals.getEncryptionKey();
 
@@ -1040,9 +1002,7 @@ describe("persistence utilities", () => {
 				},
 			};
 
-			mockReadFile.mockResolvedValue(
-				JSON.stringify([encryptedConnection]),
-			);
+			mockReadFile.mockResolvedValue(JSON.stringify([encryptedConnection]));
 
 			const result = await loadConnections();
 
@@ -1053,7 +1013,7 @@ describe("persistence utilities", () => {
 		});
 
 		it("handles unexpected errors during connection processing", async () => {
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
 			// Mock the connection schema to succeed
 			const schemaSpy = vi
@@ -1088,9 +1048,7 @@ describe("persistence utilities", () => {
 					},
 				];
 
-				mockReadFile.mockResolvedValue(
-					JSON.stringify(connectionData),
-				);
+				mockReadFile.mockResolvedValue(JSON.stringify(connectionData));
 
 				const result = await loadConnections();
 
