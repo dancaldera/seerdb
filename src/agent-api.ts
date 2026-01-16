@@ -1,4 +1,5 @@
 import { createDatabaseConnection } from "./database/connection.js";
+import type { DatabaseConnection, QueryRow } from "./database/types.js";
 import type { DBType } from "./types/state.js";
 import { exportToJsonString, exportToToonString } from "./utils/export.js";
 
@@ -12,8 +13,8 @@ export interface DatabaseConfig {
 	password?: string;
 }
 
-export interface QueryResult {
-	rows: any[];
+export interface QueryResult<T = QueryRow> {
+	rows: T[];
 	rowCount: number;
 	columns?: string[];
 	duration: number;
@@ -43,7 +44,7 @@ export interface SchemaInfo {
  * Designed for AI agents and automation scripts
  */
 export class SeerDBAgent {
-	private connection: any = null;
+	private connection: DatabaseConnection | null = null;
 	private config: DatabaseConfig | null = null;
 
 	/**
@@ -231,11 +232,20 @@ export class SeerDBAgent {
 
 			const result = await this.connection.query(query);
 
-			const tables: SchemaInfo["tables"] = result.rows.map((row: any) => ({
-				name: row.table_name,
-				schema: row.table_schema || undefined,
-				type: row.table_type as "table" | "view" | "materialized-view",
-			}));
+			interface SchemaRow {
+				table_name: string;
+				table_schema: string | null;
+				table_type: string;
+			}
+
+			const tables: SchemaInfo["tables"] = result.rows.map((row) => {
+				const schemaRow = row as unknown as SchemaRow;
+				return {
+					name: schemaRow.table_name,
+					schema: schemaRow.table_schema || undefined,
+					type: schemaRow.table_type as "table" | "view" | "materialized-view",
+				};
+			});
 
 			// For now, return empty columns - we can implement column fetching later if needed
 			const columns: SchemaInfo["columns"] = {};
@@ -313,17 +323,24 @@ export class SeerDBAgent {
 
 		try {
 			const results: QueryResult[] = [];
-			await this.connection.beginTransaction();
+			// Start transaction
+			await this.connection.execute("BEGIN");
 
 			for (const sql of queries) {
 				const result = await this.query(sql);
 				results.push(result);
 			}
 
-			await this.connection.commitTransaction();
+			// Commit transaction
+			await this.connection.execute("COMMIT");
 			return results;
 		} catch (error) {
-			await this.connection.rollbackTransaction();
+			// Rollback on error
+			try {
+				await this.connection.execute("ROLLBACK");
+			} catch {
+				// Ignore rollback errors
+			}
 			throw new Error(
 				`Transaction failed: ${error instanceof Error ? error.message : String(error)}`,
 			);

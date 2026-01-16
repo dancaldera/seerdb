@@ -23,7 +23,8 @@
 		"format:fix": "biome format --write .",
 		"check": "biome check --write .",
 		"type-check": "tsc --noEmit",
-		"verify": "bash scripts/verify.sh"
+		"verify": "bash scripts/verify.sh",
+		"prepare": "husky"
 	},
 	"keywords": [
 		"database",
@@ -60,6 +61,23 @@
 		"@types/react": "^18.2.46",
 		"bun-types": "^1.3.2",
 		"esbuild": "^0.27.0",
+		"husky": "^9.1.7",
+		"ink-testing-library": "^4.0.0",
+		"lint-staged": "^16.2.7",
 		"typescript": "^5.3.3"
+	},
+	"lint-staged": {
+		"src/**/*.{ts,tsx}": [
+			"biome check --write"
+		],
+		"tests/**/*.{ts,tsx}": [
+			"biome check --write"
+		],
+		"AGENTS.md": [
+			"biome format --write"
+		],
+		"README.md": [
+			"biome format --write"
+		]
 	}
 }

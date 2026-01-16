@@ -1,9 +1,10 @@
 import { Box, Text, useInput } from "ink";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActionType } from "../state/actions.js";
 import { useAppDispatch, useAppState } from "../state/context.js";
 import { ViewState } from "../types/state.js";
+import { copyToClipboard } from "../utils/clipboard.js";
 import { ViewBuilder } from "./ViewBuilder.js";
 
 export const QueryHistoryView: React.FC = () => {
@@ -11,6 +12,9 @@ export const QueryHistoryView: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [currentPage, setCurrentPage] = useState(0);
+	const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">(
+		"idle",
+	);
 
 	const PAGE_SIZE = 5; // Show 5 queries per page for better readability
 
@@ -42,6 +46,24 @@ export const QueryHistoryView: React.FC = () => {
 			setSelectedIndex(0);
 		}
 	}, [currentPage, currentPageHistory.length, selectedIndex]);
+
+	// Clear copy status after a delay
+	useEffect(() => {
+		if (copyStatus !== "idle") {
+			const timer = setTimeout(() => {
+				setCopyStatus("idle");
+			}, 2000);
+			return () => clearTimeout(timer);
+		}
+	}, [copyStatus]);
+
+	// Handle copying query to clipboard
+	const handleCopyQuery = useCallback(async () => {
+		if (selectedQuery) {
+			const success = await copyToClipboard(selectedQuery.query);
+			setCopyStatus(success ? "copied" : "failed");
+		}
+	}, [selectedQuery]);
 
 	useInput((input, key) => {
 		if (key.escape) {
@@ -83,7 +105,7 @@ export const QueryHistoryView: React.FC = () => {
 		}
 		if (input === "c" && selectedQuery) {
 			// Copy query to clipboard
-			// TODO: Implement clipboard functionality
+			void handleCopyQuery();
 		}
 	});
 
@@ -135,6 +157,12 @@ export const QueryHistoryView: React.FC = () => {
 							<Text color="gray" dimColor>
 								↑/↓ Navigate • r Re-run • c Copy • Esc Back
 							</Text>
+							{copyStatus === "copied" && (
+								<Text color="green"> ✓ Copied to clipboard!</Text>
+							)}
+							{copyStatus === "failed" && (
+								<Text color="red"> ✗ Failed to copy</Text>
+							)}
 						</Box>
 					</Box>
 

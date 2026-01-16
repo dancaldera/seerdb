@@ -23,9 +23,9 @@ export interface AgentDatabaseConfig {
 }
 
 // Query execution result
-export interface AgentQueryResult {
+export interface AgentQueryResult<T = Record<string, unknown>> {
 	/** Query result rows */
-	rows: Record<string, any>[];
+	rows: T[];
 	/** Number of rows returned */
 	rowCount: number;
 	/** Column information (if available) */
@@ -73,6 +73,14 @@ export interface AgentTableQueryOptions {
 	columns?: string[];
 }
 
+/** Payload types for API commands */
+export type AgentApiPayload =
+	| AgentDatabaseConfig // for connect
+	| { sql: string; params?: unknown[] } // for query
+	| { tableName: string; options?: AgentTableQueryOptions } // for get_table_data
+	| { queries: string[] } // for transaction
+	| undefined; // for disconnect, get_schema, get_status
+
 // API command for programmatic control
 export interface AgentApiCommand {
 	/** Command type */
@@ -85,17 +93,26 @@ export interface AgentApiCommand {
 		| "transaction"
 		| "get_status";
 	/** Command payload */
-	payload?: any;
+	payload?: AgentApiPayload;
 	/** Request ID for tracking responses */
 	requestId?: string;
 }
+
+/** Possible response data types */
+export type AgentApiResponseData =
+	| AgentQueryResult
+	| AgentSchemaInfo
+	| AgentStatus
+	| AgentCapabilities
+	| AgentQueryResult[]
+	| null;
 
 // API response
 export interface AgentApiResponse {
 	/** Whether the command succeeded */
 	success: boolean;
 	/** Response data */
-	data?: any;
+	data?: AgentApiResponseData;
 	/** Error message if failed */
 	error?: string;
 	/** Request ID for tracking */
@@ -208,10 +225,18 @@ export type AgentEventType =
 	| "error"
 	| "status_changed";
 
+/** Event data types based on event type */
+export type AgentEventData =
+	| AgentDatabaseConfig // connected
+	| AgentQueryResult // query_executed
+	| { message: string; code?: string } // error
+	| AgentStatus // status_changed
+	| undefined; // disconnected
+
 export interface AgentEvent {
 	type: AgentEventType;
 	timestamp: string;
-	data?: any;
+	data?: AgentEventData;
 }
 
 /**
