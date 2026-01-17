@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 import { execSync } from "child_process";
 import { existsSync, readFileSync } from "fs";
-import { render } from "ink";
 import { join } from "path";
-import { App } from "./App.js";
 import { runApiMode } from "./api-mode.js";
 import { runHeadlessMode } from "./headless-mode.js";
-import { registerInkInstance } from "./inkControl.js";
 import { parseCliArgs, showHelp } from "./utils/cli-args.js";
 
 const main = async () => {
@@ -92,7 +89,7 @@ const main = async () => {
 
 				// Use stdin to pass the prompt to opencode
 				const command = `opencode run -m ${finalModel}`;
-				const child = execSync(command, {
+				execSync(command, {
 					input: fullPrompt,
 					stdio: ["pipe", "inherit", "inherit"],
 				});
@@ -213,9 +210,19 @@ const main = async () => {
 		return;
 	}
 
-	// Default interactive TUI mode
-	const inkInstance = render(<App />);
-	registerInkInstance(inkInstance);
+	// No mode specified - show help
+	console.log("SeerDB - Terminal Database Explorer (Headless CLI)\n");
+	console.log("No mode specified. Use one of the following:\n");
+	console.log("  --headless    Run in headless mode for automation");
+	console.log("  --api         Run in API mode for programmatic control");
+	console.log("  --help        Show full help message\n");
+	console.log("Examples:");
+	console.log("  sdb --headless --list-connections --output toon");
+	console.log(
+		'  sdb --headless --connection-id "ID" --query "SELECT * FROM users" --output toon',
+	);
+	console.log('  echo \'{"type": "get_state"}\' | sdb --api\n');
+	console.log("For AI agents: See AGENTS.md or run: sdb --copy");
 };
 
 main().catch((error) => {

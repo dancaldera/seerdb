@@ -1,6 +1,3 @@
-import { readFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 import { parseArgs } from "util";
 
 export interface CliArgs {
@@ -14,7 +11,7 @@ export interface CliArgs {
 	query?: string;
 	/** Output format (json, table, toon) */
 	output?: "json" | "table" | "toon";
-	/** Run in headless mode (no TUI) */
+	/** Run in headless mode for automation */
 	headless?: boolean;
 	/** List saved connections */
 	listConnections?: boolean;
@@ -92,24 +89,24 @@ export const parseCliArgs = (): CliArgs => {
 
 export const showHelp = () => {
 	console.log(`
-SeerDB - Terminal Database Explorer
+SeerDB - Headless CLI Database Explorer for AI Agents
 
 AI Agents: Use --agent-help for comprehensive API documentation and usage examples.
 
 USAGE:
   sdb [OPTIONS]
 
- MODES:
-   --api, -a                    Run in API mode for programmatic control
-   --headless                   Run in headless mode (no TUI)
-   --list-connections           List all saved connections
-   --copy                       Copy agent documentation to clipboard
+MODES:
+  --headless                   Run in headless mode for automation
+  --api, -a                    Run in API mode for programmatic control
+  --list-connections           List all saved connections
+  --copy                       Copy agent documentation to clipboard
 
- OPENCODE.AI INTEGRATION:
-   sdb opencode run "message"   Run OpenCode.ai with SeerDB context (default model: opencode/big-pickle)
-   sdb opencode run "message" --model <model>  Run with specific model
+OPENCODE.AI INTEGRATION:
+  sdb opencode run "message"   Run OpenCode.ai with SeerDB context (default model: opencode/big-pickle)
+  sdb opencode run "message" --model <model>  Run with specific model
 
- CONNECTION OPTIONS:
+CONNECTION OPTIONS:
   --db-type <type>             Database type: postgresql, mysql, sqlite
   --connect, -c <string>       Connection string or SQLite file path
   --connection-name <name>     Use a saved connection by name
@@ -122,7 +119,7 @@ USAGE:
 
 QUERY OPTIONS:
   --query, -q <sql>            SQL query to execute
-   --output <format>            Output format: json, table, toon (default: table)
+  --output <format>            Output format: json, table, toon (default: table)
 
 OTHER:
   --help, -h                   Show this help message
@@ -134,14 +131,14 @@ DATABASE SUPPORT:
   - SQLite: Full support with Bun's native driver
 
 EXAMPLES:
-  # Interactive mode (default)
-  sdb
+  # List saved connections
+  sdb --headless --list-connections --output toon
 
   # Connect to PostgreSQL and run a query
-  sdb --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT * FROM users"
+  sdb --headless --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT * FROM users"
 
   # Connect to SQLite file
-  sdb --db-type sqlite --connect /path/to/db.sqlite --query "SELECT * FROM table1"
+  sdb --headless --db-type sqlite --connect /path/to/db.sqlite --query "SELECT * FROM table1"
 
   # API mode for programmatic control
   sdb --api
@@ -151,9 +148,6 @@ EXAMPLES:
 
   # Headless mode with TOON output (optimized for AI agents - 30-60% fewer tokens)
   sdb --headless --db-type postgresql --connect "postgresql://user:pass@host/db" --query "SELECT * FROM users LIMIT 10" --output toon
-
-  # List saved connections (shows ID, name, type, masked connection string)
-  sdb --headless --list-connections --output toon
 
   # Use saved connection by ID (most reliable for automation)
   sdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_name FROM information_schema.tables"

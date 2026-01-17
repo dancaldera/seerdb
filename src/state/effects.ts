@@ -34,7 +34,7 @@ import {
 	saveQueryHistory,
 } from "../utils/persistence.js";
 import { ActionType } from "./actions.js";
-import type { AppDispatch } from "./context.js";
+import type { AppDispatch } from "./store.js";
 
 export async function initializeApp(dispatch: AppDispatch): Promise<void> {
 	dispatch({ type: ActionType.StartLoading });
