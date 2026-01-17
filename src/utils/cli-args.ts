@@ -19,6 +19,8 @@ export interface CliArgs {
 	copy?: boolean;
 	/** Show help */
 	help?: boolean;
+	/** Show version */
+	version?: boolean;
 	/** Host for database connection */
 	host?: string;
 	/** Port for database connection */
@@ -48,6 +50,7 @@ export const parseCliArgs = (): CliArgs => {
 				headless: { type: "boolean" },
 				"list-connections": { type: "boolean" },
 				help: { type: "boolean", short: "h" },
+				version: { type: "boolean", short: "v" },
 				copy: { type: "boolean" },
 				host: { type: "string" },
 				port: { type: "string" },
@@ -70,6 +73,7 @@ export const parseCliArgs = (): CliArgs => {
 			listConnections: values["list-connections"] as boolean,
 			copy: values.copy as boolean,
 			help: values.help as boolean,
+			version: values.version as boolean,
 			host: values.host as string,
 			port: values.port ? parseInt(values.port as string, 10) : undefined,
 			database: values.database as string,
@@ -123,6 +127,7 @@ QUERY OPTIONS:
 
 OTHER:
   --help, -h                   Show this help message
+  --version, -v                Show version number
   --agent-help                 Show AI agent instructions (if you're an agent READ THIS)
 
 DATABASE SUPPORT:

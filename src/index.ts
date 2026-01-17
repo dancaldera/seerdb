@@ -113,6 +113,11 @@ const main = async () => {
 		process.exit(0);
 	}
 
+	if (args.version) {
+		console.log("0.7.0");
+		process.exit(0);
+	}
+
 	if (args.copy) {
 		// Copy agent documentation to clipboard
 		try {

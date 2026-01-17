@@ -34,7 +34,7 @@ error() {
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
 echo "║                  SeerDB Installer                    ║"
-echo "║       Terminal Database Explorer for macOS/Linux     ║"
+echo "║     Headless CLI Database Explorer for AI Agents     ║"
 echo "╚══════════════════════════════════════════════════════╝"
 echo ""
 
@@ -175,21 +175,23 @@ fi
 # Verify installation
 info "Verifying installation..."
 if [[ -x "$SYMLINK_PATH" ]]; then
-    VERSION=$("$SYMLINK_PATH" --version 2>&1 || echo "unknown")
+    # Try to get version, fallback gracefully if --version not supported
+    VERSION=$("$SYMLINK_PATH" --version 2>/dev/null || echo "installed")
     success "SeerDB installed successfully!"
     echo ""
     echo "╔══════════════════════════════════════════════════════╗"
     echo "║                    Installation Complete             ║"
     echo "╠══════════════════════════════════════════════════════╣"
     echo "║  Command: sdb                                       ║"
-    echo "║  Version: $VERSION"
+    echo "║  Version: $VERSION                                  ║"
     echo "╚══════════════════════════════════════════════════════╝"
     echo ""
     info "Quick start:"
-    echo "  1. Run: sdb"
-    echo "  2. Select your database type"
-    echo "  3. Enter connection details"
+    echo "  sdb --help                                    # Show help"
+    echo "  sdb --headless --list-connections --output toon  # List connections"
+    echo "  sdb --headless --connection-id ID --query 'SELECT 1'  # Run query"
     echo ""
+    info "For AI agents: sdb --copy  # Copy documentation to clipboard"
     info "For more information: https://github.com/dancaldera/seerdb"
     echo ""
 else
