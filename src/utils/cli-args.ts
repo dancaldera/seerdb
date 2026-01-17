@@ -21,6 +21,8 @@ export interface CliArgs {
 	help?: boolean;
 	/** Show version */
 	version?: boolean;
+	/** Show AI agent help (outputs AGENTS.md) */
+	agentHelp?: boolean;
 	/** Host for database connection */
 	host?: string;
 	/** Port for database connection */
@@ -52,6 +54,7 @@ export const parseCliArgs = (): CliArgs => {
 				help: { type: "boolean", short: "h" },
 				version: { type: "boolean", short: "v" },
 				copy: { type: "boolean" },
+				"agent-help": { type: "boolean" },
 				host: { type: "string" },
 				port: { type: "string" },
 				database: { type: "string", short: "d" },
@@ -74,6 +77,7 @@ export const parseCliArgs = (): CliArgs => {
 			copy: values.copy as boolean,
 			help: values.help as boolean,
 			version: values.version as boolean,
+			agentHelp: values["agent-help"] as boolean,
 			host: values.host as string,
 			port: values.port ? parseInt(values.port as string, 10) : undefined,
 			database: values.database as string,

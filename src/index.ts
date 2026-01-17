@@ -118,6 +118,62 @@ const main = async () => {
 		process.exit(0);
 	}
 
+	if (args.agentHelp) {
+		// Output agent documentation to stdout
+		try {
+			const header =
+				"# SeerDB Agent API Documentation\n# Use this context for AI agents to understand SeerDB capabilities\n\n";
+
+			// Try multiple possible locations for AGENTS.md
+			let agentsMdPath: string | null = null;
+			const possiblePaths = [
+				// When running from dist/ (bundled with binary)
+				join(process.cwd(), "AGENTS.md"),
+				// When running from project root
+				join(process.cwd(), "..", "AGENTS.md"),
+				// When running as installed binary (try common locations)
+				"/usr/local/share/seerdb/AGENTS.md",
+				"/opt/seerdb/AGENTS.md",
+			];
+
+			for (const path of possiblePaths) {
+				if (existsSync(path)) {
+					agentsMdPath = path;
+					break;
+				}
+			}
+
+			let agentsContent: string;
+
+			if (agentsMdPath) {
+				// Load from local file
+				agentsContent = readFileSync(agentsMdPath, "utf-8");
+			} else {
+				// Fallback: fetch from GitHub
+				console.error(
+					"Downloading SeerDB agent documentation from GitHub...",
+				);
+				const githubUrl =
+					"https://raw.githubusercontent.com/dancaldera/seerdb/main/AGENTS.md";
+				const response = await fetch(githubUrl);
+
+				if (!response.ok) {
+					throw new Error(
+						`Failed to fetch AGENTS.md from GitHub: ${response.statusText}`,
+					);
+				}
+
+				agentsContent = await response.text();
+			}
+
+			console.log(header + agentsContent);
+		} catch (error) {
+			console.error("Error reading agent documentation:", error);
+			process.exit(1);
+		}
+		process.exit(0);
+	}
+
 	if (args.copy) {
 		// Copy agent documentation to clipboard
 		try {
