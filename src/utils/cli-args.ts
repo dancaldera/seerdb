@@ -37,6 +37,14 @@ export interface CliArgs {
 	connectionName?: string;
 	/** ID of saved connection to use */
 	connectionId?: string;
+	/** Add a new connection */
+	addConnection?: boolean;
+	/** Delete a connection */
+	deleteConnection?: boolean;
+	/** Test a connection without saving */
+	testConnection?: boolean;
+	/** Name for the connection (with --add-connection) */
+	name?: string;
 }
 
 export const parseCliArgs = (): CliArgs => {
@@ -62,6 +70,10 @@ export const parseCliArgs = (): CliArgs => {
 				password: { type: "string", short: "p" },
 				"connection-name": { type: "string" },
 				"connection-id": { type: "string" },
+				"add-connection": { type: "boolean" },
+				"delete-connection": { type: "boolean" },
+				"test-connection": { type: "boolean" },
+				name: { type: "string" },
 			},
 			allowPositionals: false,
 		});
@@ -88,6 +100,10 @@ export const parseCliArgs = (): CliArgs => {
 					: undefined,
 			connectionName: values["connection-name"] as string,
 			connectionId: values["connection-id"] as string,
+			addConnection: values["add-connection"] as boolean,
+			deleteConnection: values["delete-connection"] as boolean,
+			testConnection: values["test-connection"] as boolean,
+			name: values.name as string,
 		};
 	} catch (error) {
 		console.error("Error parsing command line arguments:", error);
@@ -113,6 +129,12 @@ MODES:
 OPENCODE.AI INTEGRATION:
   sdb opencode run "message"   Run OpenCode.ai with SeerDB context (default model: opencode/big-pickle)
   sdb opencode run "message" --model <model>  Run with specific model
+
+CONNECTION MANAGEMENT:
+  --add-connection             Add and save a new database connection
+  --delete-connection          Delete a saved connection (requires --connection-id or --connection-name)
+  --test-connection            Test a connection without saving
+  --name <name>                Name for the connection (with --add-connection)
 
 CONNECTION OPTIONS:
   --db-type <type>             Database type: postgresql, mysql, sqlite
@@ -142,6 +164,24 @@ DATABASE SUPPORT:
 EXAMPLES:
   # List saved connections
   sdb --headless --list-connections --output toon
+
+  # Add a new connection
+  sdb --add-connection --db-type postgresql --connect "postgresql://user:pass@host/db" --name "Production DB"
+
+  # Add a connection using individual parameters
+  sdb --add-connection --db-type postgresql --host localhost --database mydb --user myuser --password mypass --name "Local Postgres"
+
+  # Add a SQLite connection
+  sdb --add-connection --db-type sqlite --connect "/path/to/database.db" --name "SQLite DB"
+
+  # Test a connection without saving
+  sdb --test-connection --db-type postgresql --connect "postgresql://user:pass@host/db"
+
+  # Delete a connection by ID
+  sdb --delete-connection --connection-id "QvdD72rW6TEL1cSdoPOPP"
+
+  # Delete a connection by name
+  sdb --delete-connection --connection-name "Local Postgres"
 
   # Connect to PostgreSQL and run a query
   sdb --headless --db-type postgresql --host localhost --database mydb --user myuser --query "SELECT * FROM users"

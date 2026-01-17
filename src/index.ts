@@ -5,6 +5,13 @@ import { join } from "path";
 import { runApiMode } from "./api-mode.js";
 import { runHeadlessMode } from "./headless-mode.js";
 import { parseCliArgs, showHelp } from "./utils/cli-args.js";
+import { createDatabaseConnection } from "./database/connection.js";
+import { ActionType } from "./state/actions.js";
+import { initializeApp } from "./state/effects.js";
+import { createStore } from "./state/store.js";
+import type { DBType } from "./types/state.js";
+import { generateUniqueConnectionId, generateUniqueConnectionName } from "./utils/id-generator.js";
+import { loadConnections, saveConnections, maskPassword } from "./utils/persistence.js";
 
 const main = async () => {
 	// Handle opencode subcommand before parsing other args
@@ -107,6 +114,207 @@ const main = async () => {
 	}
 
 	const args = parseCliArgs();
+
+	// Connection management operations
+	// --add-connection: Add and save a new database connection
+	if (args.addConnection) {
+		try {
+			// Validate required parameters
+			if (!args.dbType) {
+				console.error("Error: --db-type is required for --add-connection");
+				console.error("Example: sdb --add-connection --db-type postgresql --connect \"postgresql://user:pass@host/db\" --name \"My Database\"");
+				process.exit(1);
+			}
+
+			// Build connection string from parameters
+			let connectionString: string;
+			if (args.connect) {
+				connectionString = args.connect;
+			} else if (args.host && args.database && args.user) {
+				switch (args.dbType) {
+					case "postgresql":
+						connectionString =
+							args.password && args.password.trim() !== ""
+								? `postgresql://${args.user}:${args.password}@${args.host}:${args.port || 5432}/${args.database}`
+								: `postgresql://${args.user}@${args.host}:${args.port || 5432}/${args.database}`;
+						break;
+					case "mysql":
+						connectionString =
+							args.password && args.password.trim() !== ""
+								? `mysql://${args.user}:${args.password}@${args.host}:${args.port || 3306}/${args.database}`
+								: `mysql://${args.user}@${args.host}:${args.port || 3306}/${args.database}`;
+						break;
+					case "sqlite":
+						connectionString = args.host || args.database || "";
+						break;
+					default:
+						console.error(`Error: Unsupported database type: ${args.dbType}`);
+						process.exit(1);
+				}
+			} else {
+				console.error("Error: Either --connect or (--host --database --user) are required for --add-connection");
+				console.error("Example: sdb --add-connection --db-type postgresql --connect \"postgresql://user:pass@host/db\" --name \"My Database\"");
+				process.exit(1);
+			}
+
+			// Test the connection first
+			const connection = createDatabaseConnection({
+				type: args.dbType as DBType,
+				connectionString,
+			});
+
+			try {
+				await connection.connect();
+				await connection.close();
+				console.log("✓ Connection test successful");
+			} catch (error) {
+				console.error(`Error: Connection test failed: ${error instanceof Error ? error.message : String(error)}`);
+				process.exit(1);
+			}
+
+			// Load existing connections
+			const connectionsResult = await loadConnections();
+			const connections = connectionsResult.connections;
+
+			// Generate unique ID and name
+			const connectionId = await generateUniqueConnectionId();
+			const connectionName = args.name
+				? await generateUniqueConnectionName(args.name, args.dbType as DBType)
+				: await generateUniqueConnectionName(`${args.dbType} Database`, args.dbType as DBType);
+
+			// Create connection info
+			const timestamp = new Date().toISOString();
+			const newConnection = {
+				id: connectionId,
+				name: connectionName,
+				type: args.dbType as DBType,
+				connectionString: connectionString,
+				createdAt: timestamp,
+				updatedAt: timestamp,
+			};
+
+			// Add to connections and save
+			connections.push(newConnection);
+			await saveConnections(connections, true);
+
+			console.log(`✓ Connection saved: "${connectionName}" (ID: ${connectionId})`);
+			process.exit(0);
+		} catch (error) {
+			console.error("Error adding connection:", error instanceof Error ? error.message : String(error));
+			process.exit(1);
+		}
+	}
+
+	// --delete-connection: Delete a saved connection
+	if (args.deleteConnection) {
+		try {
+			if (!args.connectionId && !args.connectionName) {
+				console.error("Error: Either --connection-id or --connection-name is required for --delete-connection");
+				console.error("Example: sdb --delete-connection --connection-id \"QvdD72rW6TEL1cSdoPOPP\"");
+				console.error("Example: sdb --delete-connection --connection-name \"My Database\"");
+				process.exit(1);
+			}
+
+			const connectionsResult = await loadConnections();
+			const connections = connectionsResult.connections;
+
+			let targetIndex = -1;
+			let targetId = "";
+			let targetName = "";
+
+			if (args.connectionId) {
+				targetIndex = connections.findIndex((conn) => conn.id === args.connectionId);
+				if (targetIndex === -1) {
+					console.error(`Error: Connection with ID "${args.connectionId}" not found`);
+					process.exit(1);
+				}
+				targetId = args.connectionId;
+				targetName = connections[targetIndex].name;
+			} else if (args.connectionName) {
+				targetIndex = connections.findIndex(
+					(conn) => conn.name.toLowerCase() === args.connectionName!.toLowerCase(),
+				);
+				if (targetIndex === -1) {
+					console.error(`Error: Connection with name "${args.connectionName}" not found`);
+					process.exit(1);
+				}
+				targetId = connections[targetIndex].id;
+				targetName = connections[targetIndex].name;
+			}
+
+			// Remove the connection
+			const deletedConnection = connections.splice(targetIndex, 1)[0];
+			await saveConnections(connections, true);
+
+			console.log(`✓ Connection deleted: "${deletedConnection.name}" (ID: ${deletedConnection.id})`);
+			process.exit(0);
+		} catch (error) {
+			console.error("Error deleting connection:", error instanceof Error ? error.message : String(error));
+			process.exit(1);
+		}
+	}
+
+	// --test-connection: Test a connection without saving
+	if (args.testConnection) {
+		try {
+			// Validate required parameters
+			if (!args.dbType) {
+				console.error("Error: --db-type is required for --test-connection");
+				console.error("Example: sdb --test-connection --db-type postgresql --connect \"postgresql://user:pass@host/db\"");
+				process.exit(1);
+			}
+
+			// Build connection string from parameters
+			let connectionString: string;
+			if (args.connect) {
+				connectionString = args.connect;
+			} else if (args.host && args.database && args.user) {
+				switch (args.dbType) {
+					case "postgresql":
+						connectionString =
+							args.password && args.password.trim() !== ""
+								? `postgresql://${args.user}:${args.password}@${args.host}:${args.port || 5432}/${args.database}`
+								: `postgresql://${args.user}@${args.host}:${args.port || 5432}/${args.database}`;
+						break;
+					case "mysql":
+						connectionString =
+							args.password && args.password.trim() !== ""
+								? `mysql://${args.user}:${args.password}@${args.host}:${args.port || 3306}/${args.database}`
+								: `mysql://${args.user}@${args.host}:${args.port || 3306}/${args.database}`;
+						break;
+					case "sqlite":
+						connectionString = args.host || args.database || "";
+						break;
+					default:
+						console.error(`Error: Unsupported database type: ${args.dbType}`);
+						process.exit(1);
+				}
+			} else {
+				console.error("Error: Either --connect or (--host --database --user) are required for --test-connection");
+				console.error("Example: sdb --test-connection --db-type postgresql --connect \"postgresql://user:pass@host/db\"");
+				process.exit(1);
+			}
+
+			// Test the connection
+			const connection = createDatabaseConnection({
+				type: args.dbType as DBType,
+				connectionString,
+			});
+
+			try {
+				await connection.connect();
+				await connection.close();
+				console.log("✓ Connection test successful");
+				process.exit(0);
+			} catch (error) {
+				console.error(`✗ Connection test failed: ${error instanceof Error ? error.message : String(error)}`);
+				process.exit(1);
+			}
+		} catch (error) {
+			console.error("Error testing connection:", error instanceof Error ? error.message : String(error));
+			process.exit(1);
+		}
+	}
 
 	if (args.help) {
 		showHelp();

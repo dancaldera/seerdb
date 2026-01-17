@@ -84,6 +84,37 @@ sdb --headless --connection-id "ID" --query "SELECT * FROM users" --output toon
 
 **That's it!** Just these 4 commands handle 90% of agent use cases.
 
+## 🔗 Connection Management
+
+**Headless connection management commands:**
+
+```bash
+# 1. Add a new connection
+sdb --add-connection --db-type postgresql --connect "postgresql://user:pass@host/db" --name "Production DB"
+
+# 2. Add a connection using individual parameters
+sdb --add-connection --db-type postgresql --host localhost --database mydb --user myuser --password mypass --name "Local Postgres"
+
+# 3. Add a SQLite connection
+sdb --add-connection --db-type sqlite --connect "/path/to/database.db" --name "SQLite DB"
+
+# 4. Test a connection without saving
+sdb --test-connection --db-type postgresql --connect "postgresql://user:pass@host/db"
+
+# 5. Delete a connection by ID
+sdb --delete-connection --connection-id "QvdD72rW6TEL1cSdoPOPP"
+
+# 6. Delete a connection by name
+sdb --delete-connection --connection-name "Local Postgres"
+```
+
+**Connection Management Guidelines:**
+- Use `--add-connection` to save new connections for future use
+- Use `--test-connection` to validate credentials before saving
+- Use `--delete-connection` with either ID or name to remove connections
+- Connection names are auto-generated if not provided (e.g., "postgresql Database (2)")
+- All connection tests are performed before saving to ensure validity
+
 ## 🎯 Agent Recipes (Copy-Paste Ready)
 
 ### Recipe 1: Explore Any Database Schema
@@ -394,7 +425,7 @@ sdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_nam
 - Let agents handle sensitive credentials directly
 
 ✅ **Do this instead:**
-1. **Use the interactive SeerDB UI** to save connections first
+1. **Use headless connection management** to save connections first
 2. **Instruct users to run connection commands locally**
 3. **Use saved connections** that don't expose credentials
 4. **Use passwordless authentication** when possible (SSH keys, integrated auth)
@@ -403,10 +434,24 @@ sdb --headless --connection-id "QvdD72rW6TEL1cSdoPOPP" --query "SELECT table_nam
 ### Example Safe Instructions
 
 **Instead of asking for credentials:**
-> "Please run `sdb` to open the interactive interface, then add your database connection there. Once saved, you can use it in our sessions."
+> "Please run the following command to add your database connection:
+> ```bash
+> sdb --add-connection --db-type postgresql --connect \"postgresql://user:pass@host/db\" --name \"project_db\"
+> ```
+> Once saved, you can use it in our sessions."
 
-**Instead of sharing connection strings:**
-> "Add your database connection using the SeerDB interface with a name like 'project_db', then I can help you query it using that saved connection."
+**For testing before saving:**
+> "First test your connection with:
+> ```bash
+> sdb --test-connection --db-type postgresql --connect \"postgresql://user:pass@host/db\"
+> ```
+> If successful, add it with --add-connection."
+
+**For adding connections with individual parameters:**
+> "Add your PostgreSQL connection:
+> ```bash
+> sdb --add-connection --db-type postgresql --host localhost --database mydb --user myuser --password mypass --name \"Local DB\"
+> ```"
 
 ## Agent API Reference
 
